@@ -1,5 +1,5 @@
 export interface State {
-  savedTermList: []
+  savedTermList?: { term: string; definition: string }[]
   // counterStatus: 'stopped' | 'started' | 'paused'
   // setsTime: number[]
   // totalRounds: number
@@ -9,7 +9,7 @@ export interface State {
   // timeSession: number
   // timeSessionLeft: number
   // totalTimeLeft: number
-  stateLoaded: boolean
+  stateLoaded?: boolean
   // volumeState: 'on' | 'vibro' | 'off'
   // themeState: 'light' | 'dark'
   // theme: {
@@ -31,3 +31,79 @@ export interface State {
   //   white
   // }
 }
+
+export type Action =
+  // | {
+  //     type: 'resetData'
+  //   }
+  // | {
+  //     type: 'increaseCurrentSet'
+  //   }
+  // | {
+  //     type: 'resetCurrentSet'
+  //   }
+  // | {
+  //     type: 'increaseCurrentRound'
+  //   }
+  // | {
+  //     type: 'setTimeSession'
+  //     payload: {
+  //       time: number
+  //     }
+  //   }
+  // | {
+  //     type: 'setTimeSessionLeft'
+  //     payload: {
+  //       timeSessionLeft: number
+  //     }
+  //   }
+  // | {
+  //     type: 'changeStatus'
+  //     payload: {
+  //       command: 'start' | 'pause' | 'resume' | 'stop'
+  //     }
+  //   }
+  // | {
+  //     type: 'calculateTotalTime'
+  //   }
+  // | {
+  //     type: 'updateTotalTime'
+  //   }
+  // | {
+  //     type: 'changeSetAmount'
+  //     payload: {
+  //       amount: number
+  //     }
+  //   }
+  // | {
+  //     type: 'changeSetDuration'
+  //     payload: {
+  //       setNumber: number
+  //       duration: number
+  //     }
+  //   }
+  // | {
+  //     type: 'changeRoundsAmount'
+  //     payload: {
+  //       amount: number
+  //     }
+  //   }
+  | {
+      type: 'loadStoredState'
+      payload: {
+        state: State
+      }
+    }
+  | {
+      type: 'saveNewPair'
+      payload: {
+        term: string
+        definition: string
+      }
+    }
+// | {
+//     type: 'changeVolumeState'
+//   }
+// | {
+//     type: 'changeThemeState'
+//   }

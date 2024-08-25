@@ -19,16 +19,16 @@ export default function Index() {
 
   const [term, setTerm] = React.useState('')
   const [definition, setDefinition] = React.useState('')
-  const definitionRef = useRef(null)
+  const definitionRef = useRef<TextInput>(null)
   const [termList, setTermList] = React.useState<IProject[] | []>([])
 
   useEffect(() => {
     // removeValue()
-    checkFirstLaunch({ dispatch }).then()
+    checkFirstLaunch(dispatch).then()
   }, [])
 
   useEffect(() => {
-    if (state.stateLoaded) {
+    if (state.stateLoaded && state.savedTermList) {
       setTermList(state.savedTermList)
     }
   }, [state.stateLoaded])
@@ -51,7 +51,15 @@ export default function Index() {
     setTermList(newTermList)
   }
 
-  const Task = ({ term, definition, onDelete }) => {
+  const Task = ({
+    term,
+    definition,
+    onDelete,
+  }: {
+    term: string
+    definition: string
+    onDelete: () => void
+  }) => {
     return (
       <View style={styles.task}>
         <View style={styles.textWrapper}>
@@ -82,7 +90,7 @@ export default function Index() {
         // ref={ref}
         onChangeText={(term) => setTerm(term)}
         style={{ padding: 10 }}
-        onSubmitEditing={() => definitionRef.current.focus()}
+        onSubmitEditing={() => definitionRef.current?.focus()}
       />
       <TextInput
         placeholder="Definition"

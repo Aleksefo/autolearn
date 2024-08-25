@@ -1,96 +1,26 @@
-import React, { useReducer, useContext, createContext, Dispatch } from 'react'
+import React, {
+  useReducer,
+  useContext,
+  createContext,
+  Dispatch,
+  ReactNode,
+} from 'react'
 import { mergeAppState } from '../services/storageService'
 import { initialState } from '@/src/state/initialState'
-import { State } from './types'
+import { State, Action } from './types'
 
 // import themes from '../values/themes'
 
-type Action =
-  | {
-      type: 'resetData'
-    }
-  | {
-      type: 'increaseCurrentSet'
-    }
-  | {
-      type: 'resetCurrentSet'
-    }
-  | {
-      type: 'increaseCurrentRound'
-    }
-  | {
-      type: 'setTimeSession'
-      payload: {
-        time: number
-      }
-    }
-  | {
-      type: 'setTimeSessionLeft'
-      payload: {
-        timeSessionLeft: number
-      }
-    }
-  | {
-      type: 'changeStatus'
-      payload: {
-        command: 'start' | 'pause' | 'resume' | 'stop'
-      }
-    }
-  | {
-      type: 'calculateTotalTime'
-    }
-  | {
-      type: 'updateTotalTime'
-    }
-  | {
-      type: 'changeSetAmount'
-      payload: {
-        amount: number
-      }
-    }
-  | {
-      type: 'changeSetDuration'
-      payload: {
-        setNumber: number
-        duration: number
-      }
-    }
-  | {
-      type: 'changeRoundsAmount'
-      payload: {
-        amount: number
-      }
-    }
-  | {
-      type: 'loadStoredState'
-      payload: {
-        state: State
-      }
-    }
-  | {
-      type: 'saveNewPair'
-      payload: {
-        term: string
-        definition: string
-      }
-    }
-  | {
-      type: 'changeVolumeState'
-    }
-  | {
-      type: 'changeThemeState'
-    }
-
 const appReducer = (state: State, action: Action): State => {
   switch (action.type) {
-    case 'resetData':
-      return {
-        ...state,
-        // currentSet: 1,
-        // currentRound: 1,
-        // timeSession: state.setsTime[0],
-        // timeSessionLeft: state.setsTime[0],
-      }
+    // case 'resetData':
+    //   return {
+    //     ...state,
+    //     // currentSet: 1,
+    //     // currentRound: 1,
+    //     // timeSession: state.setsTime[0],
+    //     // timeSessionLeft: state.setsTime[0],
+    //   }
     // case 'increaseCurrentSet':
     //   return {
     //     ...state,
@@ -192,12 +122,11 @@ const appReducer = (state: State, action: Action): State => {
       let savedTermList
       let term = action.payload.term
       let definition = action.payload.definition
-      savedTermList = [{ term, definition }, ...state.savedTermList]
+      savedTermList = [{ term, definition }, ...(state.savedTermList as [])]
       console.log('savedTermList', savedTermList)
       mergeAppState({
-        savedTermList: [{ term, definition }, ...state.savedTermList],
+        savedTermList: [{ term, definition }, ...(state.savedTermList as [])],
       })
-      // mergeAppState([{ term, definition }, ...state.savedTermList])
       return {
         ...state,
         savedTermList,
@@ -238,7 +167,7 @@ const appReducer = (state: State, action: Action): State => {
 const StateCtx = createContext(initialState)
 const DispatchCtx = createContext((() => 0) as Dispatch<Action>)
 
-export const Provider = ({ children }) => {
+export const Provider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(appReducer, initialState)
   return (
     <DispatchCtx.Provider value={dispatch}>

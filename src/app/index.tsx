@@ -6,19 +6,39 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native'
-import React, { useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import * as Speech from 'expo-speech'
+import { useDispatch, useGlobalState } from '@/src/state/AppContext'
+import { checkFirstLaunch, getAllKeys } from '@/src/services/storageService'
 
 type IProject = { term: string; definition: string }
 
 export default function Index() {
+  const dispatch = useDispatch()
+  const state = useGlobalState()
+
   const [term, setTerm] = React.useState('')
   const [definition, setDefinition] = React.useState('')
   const definitionRef = useRef(null)
   const [termList, setTermList] = React.useState<IProject[] | []>([])
 
+  useEffect(() => {
+    // removeValue()
+    checkFirstLaunch({ dispatch }).then()
+  }, [])
+
+  useEffect(() => {
+    if (state.stateLoaded) {
+      setTermList(state.savedTermList)
+    }
+  }, [state.stateLoaded])
+
   const addNewPair = () => {
     setTermList([{ term, definition }, ...termList])
+    dispatch({
+      type: 'saveNewPair',
+      payload: { term, definition },
+    })
   }
 
   const speak = (textToSpeak: string, language: string) => {
@@ -82,6 +102,12 @@ export default function Index() {
           />
         ))}
       </ScrollView>
+      <TouchableOpacity onPress={() => console.log(state)}>
+        <Text style={styles.delete}>Test</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => getAllKeys()}>
+        <Text style={styles.delete}>Test</Text>
+      </TouchableOpacity>
     </View>
   )
 }

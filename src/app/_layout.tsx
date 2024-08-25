@@ -1,9 +1,19 @@
-import { Stack } from "expo-router";
+import { Stack } from 'expo-router'
+import { Head } from 'expo-router/build/head/ExpoHead.android'
+import { Provider, useGlobalState } from '../state/AppContext'
+import { StatusBar } from 'react-native'
 
 export default function RootLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="index" />
-    </Stack>
-  );
+    <Provider>
+      <StatusBar
+        backgroundColor={'black'}
+        // backgroundColor={state.theme.primary}
+        barStyle="dark-content"
+      />
+      <Stack>
+        <Stack.Screen name="index" />
+      </Stack>
+    </Provider>
+  )
 }

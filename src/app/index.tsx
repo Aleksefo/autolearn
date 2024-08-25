@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native'
 import React, { useRef } from 'react'
+import * as Speech from 'expo-speech'
 
 type IProject = { term: string; definition: string }
 
@@ -20,7 +21,11 @@ export default function Index() {
     setTermList([{ term, definition }, ...termList])
   }
 
-  const deleteTask = (index) => {
+  const speak = (textToSpeak: string, language: string) => {
+    Speech.speak(textToSpeak, { language })
+  }
+
+  const deleteTask = (index: number) => {
     const newTermList = [...termList]
     newTermList.splice(index, 1)
     setTermList(newTermList)
@@ -30,8 +35,12 @@ export default function Index() {
     return (
       <View style={styles.task}>
         <View style={styles.textWrapper}>
-          <Text style={styles.text}>{term}</Text>
-          <Text style={styles.text}>{definition}</Text>
+          <TouchableOpacity onPress={() => speak(term, 'es')}>
+            <Text style={styles.text}>{term}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => speak(definition, 'en')}>
+            <Text style={styles.text}>{definition}</Text>
+          </TouchableOpacity>
         </View>
         <TouchableOpacity onPress={onDelete}>
           <Text style={styles.delete}>Delete</Text>

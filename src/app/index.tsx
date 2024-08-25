@@ -39,19 +39,21 @@ export default function Index() {
       type: 'saveNewPair',
       payload: { term, definition },
     })
+    setTerm('')
+    setDefinition('')
   }
 
   const speak = (textToSpeak: string, language: string) => {
     Speech.speak(textToSpeak, { language })
   }
 
-  const deleteTask = (index: number) => {
+  const deletePair = (index: number) => {
     const newTermList = [...termList]
     newTermList.splice(index, 1)
     setTermList(newTermList)
   }
 
-  const Task = ({
+  const Pair = ({
     term,
     definition,
     onDelete,
@@ -61,7 +63,7 @@ export default function Index() {
     onDelete: () => void
   }) => {
     return (
-      <View style={styles.task}>
+      <View style={styles.pair}>
         <View style={styles.textWrapper}>
           <TouchableOpacity onPress={() => speak(term, 'es')}>
             <Text style={styles.text}>{term}</Text>
@@ -78,18 +80,16 @@ export default function Index() {
   }
 
   return (
-    <View
-      style={{
-        flex: 1,
-        // justifyContent: "center",
-        // alignItems: "center",
-      }}>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Autolearn</Text>
+      </View>
       <TextInput
         placeholder="Term"
         value={term}
         // ref={ref}
         onChangeText={(term) => setTerm(term)}
-        style={{ padding: 10 }}
+        style={styles.input}
         onSubmitEditing={() => definitionRef.current?.focus()}
       />
       <TextInput
@@ -97,16 +97,16 @@ export default function Index() {
         value={definition}
         ref={definitionRef}
         onChangeText={(definition) => setDefinition(definition)}
-        style={{ padding: 10 }}
+        style={styles.input}
         onSubmitEditing={() => addNewPair()}
       />
-      <ScrollView>
+      <ScrollView style={styles.terms}>
         {termList.map(({ term, definition }, index) => (
-          <Task
+          <Pair
             key={index}
             term={term}
             definition={definition}
-            onDelete={() => deleteTask(index)}
+            onDelete={() => deletePair(index)}
           />
         ))}
       </ScrollView>
@@ -121,14 +121,14 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  task: {
+  pair: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#f8f8f8',
-    padding: 15,
-    borderRadius: 10,
-    margin: 10,
+    padding: 8,
+    borderRadius: 8,
+    margin: 8,
   },
   textWrapper: {
     flex: 1,
@@ -138,5 +138,32 @@ const styles = StyleSheet.create({
   },
   delete: {
     color: 'red',
+  },
+  container: {
+    flex: 1,
+    padding: 8,
+  },
+  header: {
+    marginTop: 24,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#777',
+    borderRadius: 8,
+    padding: 8,
+    margin: 8,
+  },
+  terms: {
+    marginTop: 0,
   },
 })

@@ -9,10 +9,16 @@ export default function RootLayout() {
       <StatusBar
         backgroundColor={'black'}
         // backgroundColor={state.theme.primary}
-        barStyle="dark-content"
+        // barStyle="light-content"
       />
       <Stack>
-        <Stack.Screen name="index" />
+        <Stack.Screen
+          name="index"
+          options={{
+            // Hide the header for this route
+            headerShown: false,
+          }}
+        />
       </Stack>
     </Provider>
   )

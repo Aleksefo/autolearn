@@ -119,17 +119,36 @@ const appReducer = (state: State, action: Action): State => {
         stateLoaded: true,
       }
     case 'saveNewPair':
-      let savedTermList
+      let termList
       let term = action.payload.term
       let definition = action.payload.definition
-      savedTermList = [{ term, definition }, ...(state.savedTermList as [])]
-      console.log('savedTermList', savedTermList)
-      mergeAppState({
-        savedTermList: [{ term, definition }, ...(state.savedTermList as [])],
-      })
+      const { sourceLanguage, targetLanguage, savedTermList } = state
+      let id = savedTermList?.length || 0
+      let createdAt = Date.now()
+      let modifiedAt = Date.now()
+      let timesListened = 0
+      let status = 'active' as 'active'
+      let familiarity = 0
+      termList = [
+        {
+          id,
+          term,
+          definition,
+          sourceLanguage,
+          targetLanguage,
+          createdAt,
+          modifiedAt,
+          timesListened,
+          status,
+          familiarity,
+        },
+        ...(savedTermList as []),
+      ]
+      console.log('savedTermList', termList)
+      mergeAppState({ savedTermList: termList })
       return {
         ...state,
-        savedTermList,
+        savedTermList: termList,
       }
     // case 'changeVolumeState':
     //   let volumeState

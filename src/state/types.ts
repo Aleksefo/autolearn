@@ -1,5 +1,18 @@
 export interface State {
-  savedTermList?: { term: string; definition: string }[]
+  savedTermList?: {
+    id: number
+    term: string
+    definition: string
+    sourceLanguage: string
+    targetLanguage: string
+    createdAt: number
+    modifiedAt: number
+    timesListened: number
+    status: 'active' | 'inactive'
+    familiarity: number
+  }[]
+  sourceLanguage: string
+  targetLanguage: string
   // counterStatus: 'stopped' | 'started' | 'paused'
   // setsTime: number[]
   // totalRounds: number

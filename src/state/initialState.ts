@@ -2,6 +2,8 @@ import { State } from './types'
 
 export const initialState: State = {
   savedTermList: [],
+  sourceLanguage: 'es',
+  targetLanguage: 'en',
   // counterStatus: 'stopped',
   // setsTime: [60, 60, 60, 60],
   // totalRounds: 2,

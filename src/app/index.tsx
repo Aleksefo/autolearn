@@ -9,7 +9,11 @@ import {
 import React, { useEffect, useRef } from 'react'
 import * as Speech from 'expo-speech'
 import { useDispatch, useGlobalState } from '@/src/state/AppContext'
-import { checkFirstLaunch, getAllKeys } from '@/src/services/storageService'
+import {
+  checkFirstLaunch,
+  getAllKeys,
+  removeValue,
+} from '@/src/services/storageService'
 
 type IProject = { term: string; definition: string }
 

@@ -6,29 +6,30 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native'
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as Speech from 'expo-speech'
 import { useDispatch, useGlobalState } from '@/src/state/AppContext'
-import {
-  checkFirstLaunch,
-  getAllKeys,
-  removeValue,
-} from '@/src/services/storageService'
+import { checkFirstLaunch, removeValue } from '@/src/services/storageService'
 import { Term } from '@/src/state/types'
 
 export default function Index() {
   const dispatch = useDispatch()
   const state = useGlobalState()
 
-  const [term, setTerm] = React.useState('')
-  const [definition, setDefinition] = React.useState('')
+  const [term, setTerm] = useState('')
+  const [definition, setDefinition] = useState('')
   const definitionRef = useRef<TextInput>(null)
-  const [termList, setTermList] = React.useState<Term[]>([])
+  const [termList, setTermList] = useState<Term[]>([])
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [wordsLeft, setWordsLeft] = useState(0)
 
   useEffect(() => {
-    // removeValue()
     checkFirstLaunch(dispatch).then()
   }, [])
+
+  useEffect(() => {
+    if (wordsLeft === 0 && isPlaying) startPlayback()
+  }, [wordsLeft])
 
   useEffect(() => {
     if (state.stateLoaded && state.savedTermList) {
@@ -75,6 +76,26 @@ export default function Index() {
 
   const speak = (textToSpeak: string, language: string) => {
     Speech.speak(textToSpeak, { language })
+  }
+
+  const startPlayback = () => {
+    setIsPlaying(true)
+    setWordsLeft(termList.length)
+    termList.map(
+      ({ id, term, definition, sourceLanguage, targetLanguage }, index) => {
+        Speech.speak(term, {
+          language: sourceLanguage,
+        })
+        Speech.speak(definition, {
+          language: targetLanguage,
+          onDone: () => setWordsLeft(termList.length - index - 1),
+        })
+      },
+    )
+  }
+  const stopPlayback = () => {
+    setIsPlaying(false)
+    Speech.stop()
   }
 
   const deletePair = (index: number) => {
@@ -140,17 +161,33 @@ export default function Index() {
           />
         ))}
       </ScrollView>
-      <TouchableOpacity onPress={() => console.log(state)}>
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={() => console.log(state)}>
         <Text style={styles.delete}>Test</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => getAllKeys()}>
-        <Text style={styles.delete}>Test</Text>
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={() => startPlayback()}>
+        <Text style={styles.delete}>Play</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.testButton}
+        disabled
+        onPress={() => removeValue()}>
+        <Text style={styles.delete}>Reset</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={() => stopPlayback()}>
+        <Text style={styles.delete}>Pause</Text>
       </TouchableOpacity>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
+  testButton: { margin: 8 },
   pair: {
     flexDirection: 'row',
     justifyContent: 'space-between',

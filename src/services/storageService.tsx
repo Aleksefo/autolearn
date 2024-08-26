@@ -15,7 +15,6 @@ export const checkFirstLaunch = async (dispatch: Dispatch<Action>) => {
       })
       await AsyncStorage.setItem(appStateKey, JSON.stringify(initialState))
     } else {
-      console.log(savedState)
       dispatch({
         type: 'loadStoredState',
         payload: { state: JSON.parse(savedState) },
@@ -33,7 +32,6 @@ export const checkFirstLaunch = async (dispatch: Dispatch<Action>) => {
 }
 
 export const mergeAppState = async (value: object) => {
-  console.log('merging', value)
   try {
     await AsyncStorage.mergeItem(appStateKey, JSON.stringify(value))
 

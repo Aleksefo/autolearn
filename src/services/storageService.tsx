@@ -5,7 +5,6 @@ const appStateKey = 'appStateKey'
 import { Action } from '../state/types'
 
 export const checkFirstLaunch = async (dispatch: Dispatch<Action>) => {
-  // const dispatch = useDispatch()
   try {
     const savedState = await AsyncStorage.getItem(appStateKey)
     if (savedState === null) {
@@ -19,12 +18,6 @@ export const checkFirstLaunch = async (dispatch: Dispatch<Action>) => {
         type: 'loadStoredState',
         payload: { state: JSON.parse(savedState) },
       })
-      // dispatch({
-      //   type: 'calculateTotalTime',
-      // })
-      // dispatch({
-      //   type: 'resetData',
-      // })
     }
   } catch (error) {
     if (__DEV__) console.log('retrieveData error ' + error)

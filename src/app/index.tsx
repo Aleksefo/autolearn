@@ -67,13 +67,13 @@ export default function Index() {
     ]
     setTermList(tempTermList)
     dispatch({
-      type: 'saveNewPair',
+      type: 'updateSavedTermList',
       payload: { savedTermList: tempTermList },
     })
     setTerm('')
     setDefinition('')
   }
-
+  //todo remove later
   const speak = (textToSpeak: string, language: string) => {
     Speech.speak(textToSpeak, { language })
   }
@@ -99,9 +99,13 @@ export default function Index() {
   }
 
   const deletePair = (index: number) => {
-    const newTermList = [...termList]
+    const newTermList = [...(state.savedTermList as [])]
     newTermList.splice(index, 1)
     setTermList(newTermList)
+    dispatch({
+      type: 'updateSavedTermList',
+      payload: { savedTermList: newTermList },
+    })
   }
 
   const Pair = ({
@@ -138,7 +142,6 @@ export default function Index() {
       <TextInput
         placeholder="Term"
         value={term}
-        // ref={ref}
         onChangeText={(term) => setTerm(term)}
         style={styles.input}
         onSubmitEditing={() => definitionRef.current?.focus()}

@@ -14,8 +14,7 @@ import {
   getAllKeys,
   removeValue,
 } from '@/src/services/storageService'
-
-type IProject = { term: string; definition: string }
+import { Term } from '@/src/state/types'
 
 export default function Index() {
   const dispatch = useDispatch()
@@ -24,7 +23,7 @@ export default function Index() {
   const [term, setTerm] = React.useState('')
   const [definition, setDefinition] = React.useState('')
   const definitionRef = useRef<TextInput>(null)
-  const [termList, setTermList] = React.useState<IProject[] | []>([])
+  const [termList, setTermList] = React.useState<Term[]>([])
 
   useEffect(() => {
     // removeValue()
@@ -38,10 +37,37 @@ export default function Index() {
   }, [state.stateLoaded])
 
   const addNewPair = () => {
-    setTermList([{ term, definition }, ...termList])
+    let tempTermList: Term[]
+    const {
+      sourceLanguage = 'es', //todo remove optionality once language selection is in place
+      targetLanguage = 'en',
+      savedTermList,
+    } = state
+    let id = savedTermList?.length || 0
+    let createdAt = Date.now()
+    let modifiedAt = Date.now()
+    let timesListened = 0
+    let status = 'active' as 'active'
+    let familiarity = 0
+    tempTermList = [
+      {
+        id,
+        term,
+        definition,
+        sourceLanguage,
+        targetLanguage,
+        createdAt,
+        modifiedAt,
+        timesListened,
+        status,
+        familiarity,
+      },
+      ...(savedTermList as []),
+    ]
+    setTermList(tempTermList)
     dispatch({
       type: 'saveNewPair',
-      payload: { term, definition },
+      payload: { savedTermList: tempTermList },
     })
     setTerm('')
     setDefinition('')

@@ -1,18 +1,20 @@
-export interface State {
-  savedTermList?: {
-    id: number
-    term: string
-    definition: string
-    sourceLanguage: string
-    targetLanguage: string
-    createdAt: number
-    modifiedAt: number
-    timesListened: number
-    status: 'active' | 'inactive'
-    familiarity: number
-  }[]
+export type Term = {
+  id: number
+  term: string
+  definition: string
   sourceLanguage: string
   targetLanguage: string
+  createdAt: number
+  modifiedAt: number
+  timesListened: number
+  status: 'active' | 'inactive'
+  familiarity: number
+}
+
+export interface State {
+  savedTermList?: Term[]
+  sourceLanguage?: string
+  targetLanguage?: string
   // counterStatus: 'stopped' | 'started' | 'paused'
   // setsTime: number[]
   // totalRounds: number
@@ -110,8 +112,7 @@ export type Action =
   | {
       type: 'saveNewPair'
       payload: {
-        term: string
-        definition: string
+        savedTermList: Term[]
       }
     }
 // | {

@@ -13,6 +13,7 @@ import * as Speech from 'expo-speech'
 import { useDispatch, useGlobalState } from '@/src/state/AppContext'
 import { checkFirstLaunch, removeValue } from '@/src/services/storageService'
 import { Pair } from '@/src/state/types'
+import { CollapsiblePair } from '@/src/components/CollapsiblePair'
 
 export default function Index() {
   const dispatch = useDispatch()
@@ -78,11 +79,6 @@ export default function Index() {
     setDefinition('')
   }
 
-  //todo remove later
-  const speak = (textToSpeak: string, language: string) => {
-    Speech.speak(textToSpeak, { language })
-  }
-
   const updateTimesListened = (id: number) => {
     updatePairList((draft) => {
       const pairList = draft.find((a) => a.id === id)
@@ -138,35 +134,6 @@ export default function Index() {
     })
   }
 
-  const Pair = ({
-    term,
-    definition,
-    timesListened,
-    onDelete,
-  }: {
-    term: string
-    definition: string
-    timesListened: number
-    onDelete: () => void
-  }) => {
-    return (
-      <View style={styles.pair}>
-        <View style={styles.textWrapper}>
-          <TouchableOpacity onPress={() => speak(term, 'es')}>
-            <Text style={styles.text}>{term}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => speak(definition, 'en')}>
-            <Text style={styles.text}>{definition}</Text>
-          </TouchableOpacity>
-        </View>
-        <Text>{timesListened}</Text>
-        <TouchableOpacity onPress={onDelete}>
-          <Text style={styles.delete}>Delete</Text>
-        </TouchableOpacity>
-      </View>
-    )
-  }
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -188,13 +155,11 @@ export default function Index() {
         onSubmitEditing={() => addNewPair()}
       />
       <ScrollView style={styles.terms}>
-        {pairList.map(({ term, definition, timesListened }, index) => (
-          <Pair
+        {pairList.map((pair, index) => (
+          <CollapsiblePair
             key={index}
-            term={term}
-            definition={definition}
-            timesListened={timesListened}
             onDelete={() => deletePair(index)}
+            pair={pair}
           />
         ))}
       </ScrollView>
@@ -235,9 +200,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#f8f8f8',
-    padding: 8,
+    padding: 4,
     borderRadius: 8,
-    margin: 8,
+    marginVertical: 4,
   },
   textWrapper: {
     flex: 1,

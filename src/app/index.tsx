@@ -109,6 +109,7 @@ export default function Index() {
       },
     )
   }
+
   const stopPlayback = () => {
     setIsPlaying(false)
     dispatch({
@@ -116,6 +117,15 @@ export default function Index() {
       payload: { savedPairList: pairList },
     })
     Speech.stop()
+  }
+  const randomizePairList = () => {
+    let tempPairList: Pair[] = [...pairList]
+
+    for (let i = tempPairList.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[tempPairList[i], tempPairList[j]] = [tempPairList[j], tempPairList[i]]
+    }
+    updatePairList(tempPairList)
   }
 
   const deletePair = (index: number) => {
@@ -208,6 +218,11 @@ export default function Index() {
         style={styles.testButton}
         onPress={() => stopPlayback()}>
         <Text style={styles.delete}>Pause</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={() => randomizePairList()}>
+        <Text style={styles.delete}>shuffle</Text>
       </TouchableOpacity>
     </View>
   )

@@ -17,12 +17,12 @@ const appReducer = (state: State, action: Action): State => {
         ...action.payload.state,
         stateLoaded: true,
       }
-    case 'updateSavedTermList':
-      let savedTermList = action.payload.savedTermList
-      mergeAppState({ savedTermList })
+    case 'updateSavedPairList':
+      let savedPairList = action.payload.savedPairList
+      mergeAppState({ savedPairList })
       return {
         ...state,
-        savedTermList,
+        savedPairList,
       }
     default:
       throw new Error('Undefined action ' + action)

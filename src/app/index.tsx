@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
 } from 'react-native'
 import { useEffect, useRef, useState } from 'react'
+import { useImmer } from 'use-immer'
+
 import * as Speech from 'expo-speech'
 import { useDispatch, useGlobalState } from '@/src/state/AppContext'
 import { checkFirstLaunch, removeValue } from '@/src/services/storageService'
-import { Term } from '@/src/state/types'
+import { Pair } from '@/src/state/types'
 
 export default function Index() {
   const dispatch = useDispatch()
@@ -19,7 +21,7 @@ export default function Index() {
   const [term, setTerm] = useState('')
   const [definition, setDefinition] = useState('')
   const definitionRef = useRef<TextInput>(null)
-  const [termList, setTermList] = useState<Term[]>([])
+  const [pairList, updatePairList] = useImmer<Pair[]>([])
   const [isPlaying, setIsPlaying] = useState(false)
   const [wordsLeft, setWordsLeft] = useState(0)
 
@@ -28,29 +30,31 @@ export default function Index() {
   }, [])
 
   useEffect(() => {
-    if (wordsLeft === 0 && isPlaying) startPlayback()
+    if (wordsLeft === 0 && isPlaying) {
+      startPlayback()
+    }
   }, [wordsLeft])
 
   useEffect(() => {
-    if (state.stateLoaded && state.savedTermList) {
-      setTermList(state.savedTermList)
+    if (state.stateLoaded && state.savedPairList) {
+      updatePairList(state.savedPairList)
     }
   }, [state.stateLoaded])
 
   const addNewPair = () => {
-    let tempTermList: Term[]
+    let tempPairList: Pair[]
     const {
       sourceLanguage = 'es', //todo remove optionality once language selection is in place
       targetLanguage = 'en',
-      savedTermList,
+      savedPairList,
     } = state
-    let id = savedTermList?.length || 0
+    let id = savedPairList?.length || 0
     let createdAt = Date.now()
     let modifiedAt = Date.now()
     let timesListened = 0
     let status = 'active' as 'active'
     let familiarity = 0
-    tempTermList = [
+    tempPairList = [
       {
         id,
         term,
@@ -63,58 +67,76 @@ export default function Index() {
         status,
         familiarity,
       },
-      ...(savedTermList as []),
+      ...(savedPairList as []),
     ]
-    setTermList(tempTermList)
+    updatePairList(tempPairList)
     dispatch({
-      type: 'updateSavedTermList',
-      payload: { savedTermList: tempTermList },
+      type: 'updateSavedPairList',
+      payload: { savedPairList: tempPairList },
     })
     setTerm('')
     setDefinition('')
   }
+
   //todo remove later
   const speak = (textToSpeak: string, language: string) => {
     Speech.speak(textToSpeak, { language })
   }
 
+  const updateTimesListened = (id: number) => {
+    updatePairList((draft) => {
+      const pairList = draft.find((a) => a.id === id)
+      pairList!.timesListened++
+    })
+  }
+
   const startPlayback = () => {
     setIsPlaying(true)
-    setWordsLeft(termList.length)
-    termList.map(
-      ({ id, term, definition, sourceLanguage, targetLanguage }, index) => {
+    setWordsLeft(pairList.length)
+    pairList.map(
+      (
+        { id, term, definition, sourceLanguage, targetLanguage, timesListened },
+        index,
+      ) => {
         Speech.speak(term, {
           language: sourceLanguage,
+          onDone: () => updateTimesListened(id),
         })
         Speech.speak(definition, {
           language: targetLanguage,
-          onDone: () => setWordsLeft(termList.length - index - 1),
+          onDone: () => setWordsLeft(pairList.length - index - 1),
         })
       },
     )
   }
   const stopPlayback = () => {
     setIsPlaying(false)
+    dispatch({
+      type: 'updateSavedPairList',
+      payload: { savedPairList: pairList },
+    })
     Speech.stop()
   }
 
   const deletePair = (index: number) => {
-    const newTermList = [...(state.savedTermList as [])]
-    newTermList.splice(index, 1)
-    setTermList(newTermList)
+    const newPairList = [...(state.savedPairList as [])]
+    newPairList.splice(index, 1)
+    updatePairList(newPairList)
     dispatch({
-      type: 'updateSavedTermList',
-      payload: { savedTermList: newTermList },
+      type: 'updateSavedPairList',
+      payload: { savedPairList: newPairList },
     })
   }
 
   const Pair = ({
     term,
     definition,
+    timesListened,
     onDelete,
   }: {
     term: string
     definition: string
+    timesListened: number
     onDelete: () => void
   }) => {
     return (
@@ -127,6 +149,7 @@ export default function Index() {
             <Text style={styles.text}>{definition}</Text>
           </TouchableOpacity>
         </View>
+        <Text>{timesListened}</Text>
         <TouchableOpacity onPress={onDelete}>
           <Text style={styles.delete}>Delete</Text>
         </TouchableOpacity>
@@ -155,18 +178,19 @@ export default function Index() {
         onSubmitEditing={() => addNewPair()}
       />
       <ScrollView style={styles.terms}>
-        {termList.map(({ term, definition }, index) => (
+        {pairList.map(({ term, definition, timesListened }, index) => (
           <Pair
             key={index}
             term={term}
             definition={definition}
+            timesListened={timesListened}
             onDelete={() => deletePair(index)}
           />
         ))}
       </ScrollView>
       <TouchableOpacity
         style={styles.testButton}
-        onPress={() => console.log(state)}>
+        onPress={() => console.log(pairList)}>
         <Text style={styles.delete}>Test</Text>
       </TouchableOpacity>
       <TouchableOpacity

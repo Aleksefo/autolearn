@@ -1,4 +1,4 @@
-export type Term = {
+export type Pair = {
   id: number
   term: string
   definition: string
@@ -12,7 +12,7 @@ export type Term = {
 }
 
 export interface State {
-  savedTermList?: Term[]
+  savedPairList?: Pair[]
   sourceLanguage?: string
   targetLanguage?: string
   stateLoaded?: boolean
@@ -26,8 +26,8 @@ export type Action =
       }
     }
   | {
-      type: 'updateSavedTermList'
+      type: 'updateSavedPairList'
       payload: {
-        savedTermList: Term[]
+        savedPairList: Pair[]
       }
     }

@@ -24,6 +24,9 @@ export default function Index() {
   const definitionRef = useRef<TextInput>(null)
   const [pairList, updatePairList] = useImmer<Pair[]>([])
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isTimed, setIsTimed] = useState(false)
+  const [timeStarted, setTimeStarted] = useState(0)
+  const [timer, setTimer] = useState(10)
   const [wordsLeft, setWordsLeft] = useState(0)
 
   useEffect(() => {
@@ -31,7 +34,9 @@ export default function Index() {
   }, [])
 
   useEffect(() => {
-    if (wordsLeft === 0 && isPlaying) {
+    if (Date.now() >= timeStarted + 60000 * timer && isTimed) {
+      stopPlayback()
+    } else if (wordsLeft === 0 && isPlaying) {
       startPlayback()
     }
   }, [wordsLeft])
@@ -86,6 +91,12 @@ export default function Index() {
     })
   }
 
+  const startTimedPlayback = () => {
+    setIsTimed(true)
+    setTimeStarted(Date.now())
+    startPlayback()
+  }
+
   const startPlayback = () => {
     setIsPlaying(true)
     setWordsLeft(pairList.length)
@@ -108,6 +119,8 @@ export default function Index() {
 
   const stopPlayback = () => {
     setIsPlaying(false)
+    setIsTimed(false)
+    setTimeStarted(0)
     dispatch({
       type: 'updateSavedPairList',
       payload: { savedPairList: pairList },
@@ -168,6 +181,21 @@ export default function Index() {
         onPress={() => console.log(pairList)}>
         <Text style={styles.delete}>Test</Text>
       </TouchableOpacity>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+        <TouchableOpacity
+          style={styles.testButton}
+          onPress={() => startTimedPlayback()}>
+          <Text style={styles.delete}>Play timed</Text>
+        </TouchableOpacity>
+        <TextInput
+          placeholder="Timer"
+          value={timer.toString()}
+          keyboardType="number-pad"
+          maxLength={4}
+          onChangeText={(timer) => setTimer(Number(timer))}
+        />
+      </View>
+
       <TouchableOpacity
         style={styles.testButton}
         onPress={() => startPlayback()}>

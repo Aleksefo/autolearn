@@ -20,23 +20,23 @@ export function CollapsiblePair({
         <Text style={styles.text}>{pair.term}</Text>
         <Text style={styles.text}>{pair.definition}</Text>
       </View>
-      <TouchableOpacity
-        style={styles.heading}
-        onPress={() => setIsOpen((value) => !value)}
-        activeOpacity={0.8}>
-        <Ionicons
-          name={isOpen ? 'chevron-down' : 'chevron-forward-outline'}
-          size={18}
-        />
+      {/*<TouchableOpacity*/}
+      {/*  style={styles.heading}*/}
+      {/*  onPress={() => setIsOpen((value) => !value)}*/}
+      {/*  activeOpacity={0.8}>*/}
+      {/*  <Ionicons*/}
+      {/*    name={isOpen ? 'chevron-down' : 'chevron-forward-outline'}*/}
+      {/*    size={18}*/}
+      {/*  />*/}
+      {/*</TouchableOpacity>*/}
+      {/*{isOpen && (*/}
+      {/*  <ThemedView style={styles.content}>*/}
+      <Text>{pair.timesListened}</Text>
+      <TouchableOpacity onPress={onDelete}>
+        <Text style={styles.delete}>Delete</Text>
       </TouchableOpacity>
-      {isOpen && (
-        <ThemedView style={styles.content}>
-          <Text>{pair.timesListened}</Text>
-          <TouchableOpacity onPress={onDelete}>
-            <Text style={styles.delete}>Delete</Text>
-          </TouchableOpacity>
-        </ThemedView>
-      )}
+      {/*  </ThemedView>*/}
+      {/*)}*/}
     </View>
   )
 }

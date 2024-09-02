@@ -54,7 +54,6 @@ export default function Index() {
       targetLanguage = 'en',
       savedPairList,
     } = state
-    let id = savedPairList?.length || 0
     let createdAt = Date.now()
     let modifiedAt = Date.now()
     let timesListened = 0
@@ -62,7 +61,6 @@ export default function Index() {
     let familiarity = 0
     tempPairList = [
       {
-        id,
         term,
         definition,
         sourceLanguage,
@@ -84,9 +82,9 @@ export default function Index() {
     setDefinition('')
   }
 
-  const updateTimesListened = (id: number) => {
+  const updateTimesListened = (index: number) => {
     updatePairList((draft) => {
-      const pairList = draft.find((a) => a.id === id)
+      const pairList = draft.find((a, i) => i === index)
       pairList!.timesListened++
     })
   }
@@ -102,12 +100,12 @@ export default function Index() {
     setWordsLeft(pairList.length)
     pairList.map(
       (
-        { id, term, definition, sourceLanguage, targetLanguage, timesListened },
+        { term, definition, sourceLanguage, targetLanguage, timesListened },
         index,
       ) => {
         Speech.speak(term, {
           language: sourceLanguage,
-          onDone: () => updateTimesListened(id),
+          onDone: () => updateTimesListened(index),
         })
         Speech.speak(definition, {
           language: targetLanguage,

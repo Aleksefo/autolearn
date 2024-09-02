@@ -1,5 +1,4 @@
 export type Pair = {
-  id: number
   term: string
   definition: string
   sourceLanguage: string

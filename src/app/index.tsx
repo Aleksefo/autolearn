@@ -14,11 +14,11 @@ import { useDispatch, useGlobalState } from '@/src/state/AppContext'
 import { checkFirstLaunch, removeValue } from '@/src/services/storageService'
 import { Pair } from '@/src/state/types'
 import { CollapsiblePair } from '@/src/components/CollapsiblePair'
+import Ionicons from '@expo/vector-icons/Ionicons'
 
 export default function Index() {
   const dispatch = useDispatch()
   const state = useGlobalState()
-
   const [term, setTerm] = useState('')
   const [definition, setDefinition] = useState('')
   const definitionRef = useRef<TextInput>(null)
@@ -171,46 +171,48 @@ export default function Index() {
           />
         ))}
       </ScrollView>
-      <TouchableOpacity
-        style={styles.testButton}
-        onPress={() => console.log(pairList)}>
-        <Text style={styles.delete}>Test</Text>
-      </TouchableOpacity>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-        <TouchableOpacity
-          style={styles.testButton}
-          onPress={() => startTimedPlayback()}>
-          <Text style={styles.delete}>Play timed</Text>
+      <View style={styles.controlsContainer}>
+        <TouchableOpacity onPress={randomizePairList}>
+          <Ionicons name="shuffle" size={32} color="black" />
         </TouchableOpacity>
-        <TextInput
-          placeholder="Timer"
-          value={timer.toString()}
-          keyboardType="number-pad"
-          maxLength={4}
-          onChangeText={(timer) => setTimer(Number(timer))}
-        />
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+          <TextInput
+            placeholder="Timer"
+            value={timer.toString()}
+            keyboardType="number-pad"
+            maxLength={4}
+            style={{ borderWidth: 1 }}
+            onChangeText={(timer) => setTimer(Number(timer))}
+          />
+          <TouchableOpacity onPress={startTimedPlayback}>
+            <Ionicons name="timer-outline" size={32} color="black" />
+          </TouchableOpacity>
+        </View>
       </View>
-      <TouchableOpacity
-        style={styles.testButton}
-        onPress={() => startPlayback()}>
-        <Text style={styles.delete}>Play</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.testButton}
-        disabled
-        onPress={() => removeValue()}>
-        <Text style={styles.delete}>Reset</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.testButton}
-        onPress={() => stopPlayback()}>
-        <Text style={styles.delete}>Pause</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.testButton}
-        onPress={() => randomizePairList()}>
-        <Text style={styles.delete}>shuffle</Text>
-      </TouchableOpacity>
+      <View style={styles.playbackContainer}>
+        <View style={styles.playback}>
+          {!isPlaying ? (
+            <TouchableOpacity onPress={startPlayback}>
+              <Ionicons name="play-circle-outline" size={64} color="black" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={stopPlayback}>
+              <Ionicons name="stop-circle-outline" size={64} color="black" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+      {/*<TouchableOpacity*/}
+      {/*  style={styles.testButton}*/}
+      {/*  onPress={() => console.log(pairList)}>*/}
+      {/*  <Text style={styles.delete}>Test</Text>*/}
+      {/*</TouchableOpacity>*/}
+      {/*<TouchableOpacity*/}
+      {/*  style={styles.testButton}*/}
+      {/*  disabled*/}
+      {/*  onPress={() => removeValue()}>*/}
+      {/*  <Text style={styles.delete}>Reset</Text>*/}
+      {/*</TouchableOpacity>*/}
     </View>
   )
 }
@@ -226,6 +228,33 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 4,
   },
+  controlsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#c1c1c1',
+    height: 40,
+    paddingHorizontal: 16,
+  },
+  playbackContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 8,
+    alignItems: 'center',
+  },
+  playback: {
+    backgroundColor: '#fff',
+    borderRadius: 64,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
   textWrapper: {
     flex: 1,
   },
@@ -237,7 +266,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 8,
   },
   header: {
     marginTop: 24,
@@ -258,8 +286,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
     margin: 8,
+    marginBottom: 0,
   },
   terms: {
     marginTop: 0,
+    padding: 8,
   },
 })

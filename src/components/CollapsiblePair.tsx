@@ -2,7 +2,6 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useState } from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
-import { ThemedView } from '@/components/ThemedView'
 import { Pair } from '@/src/state/types'
 
 export function CollapsiblePair({
@@ -15,28 +14,31 @@ export function CollapsiblePair({
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <View style={styles.pair}>
-      <View style={styles.textWrapper}>
-        <Text style={styles.text}>{pair.term}</Text>
-        <Text style={styles.text}>{pair.definition}</Text>
+    <View style={styles.pairContainer}>
+      <View style={styles.pair}>
+        <View style={styles.textWrapper}>
+          <Text style={styles.text}>{pair.term}</Text>
+          <View style={{ backgroundColor: '#b1b1b1', height: 1 }} />
+          <Text style={styles.text}>{pair.definition}</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.heading}
+          onPress={() => setIsOpen((value) => !value)}
+          activeOpacity={0.8}>
+          <Ionicons
+            name={isOpen ? 'chevron-down' : 'chevron-forward-outline'}
+            size={18}
+          />
+        </TouchableOpacity>
       </View>
-      {/*<TouchableOpacity*/}
-      {/*  style={styles.heading}*/}
-      {/*  onPress={() => setIsOpen((value) => !value)}*/}
-      {/*  activeOpacity={0.8}>*/}
-      {/*  <Ionicons*/}
-      {/*    name={isOpen ? 'chevron-down' : 'chevron-forward-outline'}*/}
-      {/*    size={18}*/}
-      {/*  />*/}
-      {/*</TouchableOpacity>*/}
-      {/*{isOpen && (*/}
-      {/*  <ThemedView style={styles.content}>*/}
-      <Text>{pair.timesListened}</Text>
-      <TouchableOpacity onPress={onDelete}>
-        <Text style={styles.delete}>Delete</Text>
-      </TouchableOpacity>
-      {/*  </ThemedView>*/}
-      {/*)}*/}
+      {isOpen && (
+        <View style={styles.underPair}>
+          <Text>{`Times listened: ${pair.timesListened}`}</Text>
+          <TouchableOpacity onPress={onDelete}>
+            <Ionicons name="trash-outline" size={24} color="black" />
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   )
 }
@@ -52,6 +54,12 @@ const styles = StyleSheet.create({
     marginLeft: 24,
   },
   testButton: { margin: 8 },
+  pairContainer: {},
+  underPair: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   pair: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -60,6 +68,8 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 8,
     marginVertical: 4,
+    borderColor: '#686868',
+    borderWidth: 1,
   },
   textWrapper: {
     flex: 1,

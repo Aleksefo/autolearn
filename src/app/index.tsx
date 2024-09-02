@@ -147,9 +147,6 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Autolearn</Text>
-      </View>
       <TextInput
         placeholder="Term"
         value={term}
@@ -193,7 +190,6 @@ export default function Index() {
           onChangeText={(timer) => setTimer(Number(timer))}
         />
       </View>
-
       <TouchableOpacity
         style={styles.testButton}
         onPress={() => startPlayback()}>

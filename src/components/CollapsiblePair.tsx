@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useState } from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 import { Pair } from '@/src/state/types'
@@ -7,12 +6,14 @@ import { Pair } from '@/src/state/types'
 export function CollapsiblePair({
   pair,
   onDelete,
+  onToggle,
+  isOpen,
 }: {
   pair: Pair
   onDelete: () => void
+  onToggle: () => void
+  isOpen: boolean
 }) {
-  const [isOpen, setIsOpen] = useState(false)
-
   return (
     <View style={styles.pairContainer}>
       <View style={styles.pair}>
@@ -23,7 +24,7 @@ export function CollapsiblePair({
         </View>
         <TouchableOpacity
           style={styles.heading}
-          onPress={() => setIsOpen((value) => !value)}
+          onPress={onToggle}
           activeOpacity={0.8}>
           <Ionicons
             name={isOpen ? 'chevron-down' : 'chevron-forward-outline'}

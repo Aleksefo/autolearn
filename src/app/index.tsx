@@ -28,6 +28,7 @@ export default function Index() {
   const [timeStarted, setTimeStarted] = useState(0)
   const [timer, setTimer] = useState(10)
   const [wordsLeft, setWordsLeft] = useState(0)
+  const [expandedPairView, setExpandedPairView] = useState(-1)
 
   useEffect(() => {
     checkFirstLaunch(dispatch).then()
@@ -145,6 +146,10 @@ export default function Index() {
     })
   }
 
+  const togglePairView = (index: number) => {
+    setExpandedPairView((currentIndex) => (currentIndex === index ? -1 : index))
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <TextInput
@@ -165,7 +170,12 @@ export default function Index() {
       <FlatList
         data={pairList}
         renderItem={({ item, index }) => (
-          <CollapsiblePair onDelete={() => deletePair(index)} pair={item} />
+          <CollapsiblePair
+            onDelete={() => deletePair(index)}
+            pair={item}
+            onToggle={() => togglePairView(index)}
+            isOpen={index === expandedPairView}
+          />
         )}
         keyExtractor={(item, index) => index.toString()}
         style={styles.terms}

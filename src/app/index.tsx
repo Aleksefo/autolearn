@@ -1,17 +1,17 @@
 import {
-  ScrollView,
-  Text,
   TextInput,
   View,
   StyleSheet,
   TouchableOpacity,
+  SafeAreaView,
+  FlatList,
 } from 'react-native'
 import { useEffect, useRef, useState } from 'react'
 import { useImmer } from 'use-immer'
 
 import * as Speech from 'expo-speech'
 import { useDispatch, useGlobalState } from '@/src/state/AppContext'
-import { checkFirstLaunch, removeValue } from '@/src/services/storageService'
+import { checkFirstLaunch } from '@/src/services/storageService'
 import { Pair } from '@/src/state/types'
 import { CollapsiblePair } from '@/src/components/CollapsiblePair'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -146,7 +146,7 @@ export default function Index() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <TextInput
         placeholder="Term"
         value={term}
@@ -162,15 +162,14 @@ export default function Index() {
         style={styles.input}
         onSubmitEditing={() => addNewPair()}
       />
-      <ScrollView style={styles.terms}>
-        {pairList.map((pair, index) => (
-          <CollapsiblePair
-            key={index}
-            onDelete={() => deletePair(index)}
-            pair={pair}
-          />
-        ))}
-      </ScrollView>
+      <FlatList
+        data={pairList}
+        renderItem={({ item, index }) => (
+          <CollapsiblePair onDelete={() => deletePair(index)} pair={item} />
+        )}
+        keyExtractor={(item, index) => index.toString()}
+        style={styles.terms}
+      />
       <View style={styles.controlsContainer}>
         <TouchableOpacity onPress={randomizePairList}>
           <Ionicons name="shuffle" size={32} color="black" />
@@ -213,7 +212,7 @@ export default function Index() {
       {/*  onPress={() => removeValue()}>*/}
       {/*  <Text style={styles.delete}>Reset</Text>*/}
       {/*</TouchableOpacity>*/}
-    </View>
+    </SafeAreaView>
   )
 }
 

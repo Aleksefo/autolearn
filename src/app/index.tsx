@@ -134,6 +134,7 @@ export default function Index() {
       ;[tempPairList[i], tempPairList[j]] = [tempPairList[j], tempPairList[i]]
     }
     updatePairList(tempPairList)
+    setExpandedPairView(-1)
   }
 
   const deletePair = (index: number) => {

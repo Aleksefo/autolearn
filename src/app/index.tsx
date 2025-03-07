@@ -97,10 +97,12 @@ export default function Index() {
       ) => {
         Speech.speak(term, {
           language: sourceLanguage,
+          rate: 0.8,
           onDone: () => updateTimesListened(index),
         })
         Speech.speak(definition, {
           language: targetLanguage,
+          rate: 0.8,
           onDone: () => setWordsLeft(pairList.length - index - 1),
         })
       },

@@ -11,22 +11,9 @@ export type Pair = {
 }
 
 export interface State {
-  savedPairList?: Pair[]
-  sourceLanguage?: string
-  targetLanguage?: string
-  stateLoaded?: boolean
+  savedPairList: Pair[]
+  sourceLanguage: string
+  targetLanguage: string
+  loadStoredState: (storedState: State) => void
+  updateSavedPairList: (savedPairList: Pair[]) => void
 }
-
-export type Action =
-  | {
-      type: 'loadStoredState'
-      payload: {
-        state: State
-      }
-    }
-  | {
-      type: 'updateSavedPairList'
-      payload: {
-        savedPairList: Pair[]
-      }
-    }

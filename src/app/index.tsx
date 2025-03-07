@@ -10,15 +10,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useImmer } from 'use-immer'
 
 import * as Speech from 'expo-speech'
-import { useDispatch, useGlobalState } from '@/src/state/AppContext'
-import { checkFirstLaunch } from '@/src/services/storageService'
+import { useAppStore } from '@/src/state/AppContext'
 import { Pair } from '@/src/state/types'
 import { CollapsiblePair } from '@/src/components/CollapsiblePair'
 import Ionicons from '@expo/vector-icons/Ionicons'
 
 export default function Index() {
-  const dispatch = useDispatch()
-  const state = useGlobalState()
+  const { savedPairList, sourceLanguage, targetLanguage, updateSavedPairList } =
+    useAppStore()
   const [term, setTerm] = useState('')
   const [definition, setDefinition] = useState('')
   const definitionRef = useRef<TextInput>(null)
@@ -31,7 +30,13 @@ export default function Index() {
   const [expandedPairView, setExpandedPairView] = useState(-1)
 
   useEffect(() => {
-    checkFirstLaunch(dispatch).then()
+    const checkHydration = setInterval(() => {
+      if (useAppStore.persist.hasHydrated()) {
+        updatePairList(savedPairList)
+        clearInterval(checkHydration)
+      }
+    }, 50)
+    return () => clearInterval(checkHydration)
   }, [])
 
   useEffect(() => {
@@ -42,19 +47,8 @@ export default function Index() {
     }
   }, [wordsLeft])
 
-  useEffect(() => {
-    if (state.stateLoaded && state.savedPairList) {
-      updatePairList(state.savedPairList)
-    }
-  }, [state.stateLoaded])
-
   const addNewPair = () => {
     let tempPairList: Pair[]
-    const {
-      sourceLanguage = 'es', //todo remove optionality once language selection is in place
-      targetLanguage = 'en',
-      savedPairList,
-    } = state
     let createdAt = Date.now()
     let modifiedAt = Date.now()
     let timesListened = 0
@@ -72,13 +66,10 @@ export default function Index() {
         status,
         familiarity,
       },
-      ...(savedPairList as []),
+      ...(savedPairList as Pair[]),
     ]
     updatePairList(tempPairList)
-    dispatch({
-      type: 'updateSavedPairList',
-      payload: { savedPairList: tempPairList },
-    })
+    updateSavedPairList(tempPairList)
     setTerm('')
     setDefinition('')
   }
@@ -120,10 +111,7 @@ export default function Index() {
     setIsPlaying(false)
     setIsTimed(false)
     setTimeStarted(0)
-    dispatch({
-      type: 'updateSavedPairList',
-      payload: { savedPairList: pairList },
-    })
+    updateSavedPairList(pairList)
     Speech.stop()
   }
   const randomizePairList = () => {
@@ -138,13 +126,10 @@ export default function Index() {
   }
 
   const deletePair = (index: number) => {
-    const newPairList = [...(state.savedPairList as [])]
+    const newPairList = [...savedPairList]
     newPairList.splice(index, 1)
     updatePairList(newPairList)
-    dispatch({
-      type: 'updateSavedPairList',
-      payload: { savedPairList: newPairList },
-    })
+    updateSavedPairList(newPairList)
   }
 
   const togglePairView = (index: number) => {

@@ -1,10 +1,9 @@
 import { Stack } from 'expo-router'
-import { Provider } from '../state/AppContext'
 import { StatusBar } from 'expo-status-bar'
 
 export default function RootLayout() {
   return (
-    <Provider>
+    <>
       <StatusBar style="dark" />
       <Stack>
         <Stack.Screen
@@ -16,6 +15,6 @@ export default function RootLayout() {
           }}
         />
       </Stack>
-    </Provider>
+    </>
   )
 }

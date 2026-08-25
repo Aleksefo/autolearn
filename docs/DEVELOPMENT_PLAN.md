@@ -34,6 +34,13 @@ Explicit non-goals for v1.0 (decision points — revisit before v1.1):
 
 ## Current state (August 2026)
 
+> **Phase 1 landed (Aug 25, 2026).** The snapshot below describes the repo _before_
+> Phase 1; it is kept for context. Since then: the store lives in
+> `src/state/store.ts` with CRUD actions and id-keyed pairs (storage version 1 with
+> migration), `use-immer`/`Colors.ts`/dead code are gone, and ESLint (flat config +
+> prettier plugin, mirroring UltimateAchiever), prettier, and jest-expo are set up
+> with store tests passing.
+
 - Expo SDK 57, React Native 0.86, React 19, New Architecture, expo-router (single
   route), Zustand 5 + AsyncStorage persistence, `use-immer` for local list state.
 - One screen: `src/app/index.tsx` (~290 lines) contains input fields, the list, all
@@ -49,28 +56,31 @@ Explicit non-goals for v1.0 (decision points — revisit before v1.1):
 
 ### Known bugs (fix before building features on top)
 
-- [ ] **Delete after shuffle removes the wrong pair.** `deletePair(index)` splices
+- [x] **Delete after shuffle removes the wrong pair.** `deletePair(index)` splices
       `savedPairList` using the index from the rendered (possibly shuffled) `pairList`.
       Root cause: two sources of truth. Fix by giving each `Pair` a stable `id` and
       keying all operations (delete, edit, toggle, keyExtractor) on it.
-- [ ] **Duplicated list state.** Local `pairList` (immer) shadows the store's
+- [x] **Duplicated list state.** Local `pairList` (immer) shadows the store's
       `savedPairList` and they sync manually at hydration/stop. Consolidate: the store
       owns the data; the screen owns only view state (shuffle order as an id array,
       expanded row, playback status).
-- [ ] **Hydration is polled** with a 50 ms `setInterval` checking
+- [x] **Hydration is polled** with a 50 ms `setInterval` checking
       `useAppStore.persist.hasHydrated()`. Use `persist.onFinishHydration` or render
       directly from the store so no sync is needed at all.
-- [ ] **`timesListened` updates are lost** unless playback is stopped via the stop
+- [x] **`timesListened` updates are lost** unless playback is stopped via the stop
       button (writes happen to the local copy and only persist in `stopPlayback`).
-- [ ] **Timer input is unvalidated** — `Number('')` → 0, non-numeric input → `NaN`,
+- [x] **Timer input is unvalidated** — `Number('')` → 0, non-numeric input → `NaN`,
       making the timed-session cutoff silently wrong.
-- [ ] **Playback loop is fragile.** Restart is a side effect of a `useEffect` watching
+- [x] **Playback loop is fragile.** Restart is a side effect of a `useEffect` watching
       `wordsLeft`, with per-word `onDone` callbacks closing over stale state. Replace
-      with an explicit playback engine (Phase 2).
-- [ ] **Deprecated `SafeAreaView`** imported from `react-native`; use
+      with an explicit playback engine (Phase 2). _Phase 1 note: mitigated —
+      listen-count callbacks now go through `useAppStore.getState()` so they can't go
+      stale, and the restart effect carries eslint-disable markers pointing at the
+      Phase 2 replacement. The effect-driven loop itself still exists until Phase 2._
+- [x] **Deprecated `SafeAreaView`** imported from `react-native`; use
       `react-native-safe-area-context` (already installed).
-- [ ] **`keyExtractor` uses list index**; breaks row identity under shuffle/delete.
-- [ ] Dead code: commented-out Test/Reset buttons in `index.tsx`, unused
+- [x] **`keyExtractor` uses list index**; breaks row identity under shuffle/delete.
+- [x] Dead code: commented-out Test/Reset buttons in `index.tsx`, unused
       `loadStoredState` action, unused `Colors.ts`, many unused styles copied between
       files.
 
@@ -78,20 +88,20 @@ Explicit non-goals for v1.0 (decision points — revisit before v1.1):
 
 Everything later builds on this. No user-visible changes except bug fixes.
 
-- [ ] Restore tooling: `npx expo lint` (installs/configures ESLint flat config),
+- [x] Restore tooling: `npx expo lint` (installs/configures ESLint flat config),
       prettier config committed (note: current code is formatted with prettier
       defaults — double quotes; pick a config and format the whole repo once).
-- [ ] Add `jest-expo` + `@testing-library/react-native`; wire `test` script.
-- [ ] Introduce stable `id` on `Pair` (e.g. `expo-crypto` randomUUID) with a
+- [x] Add `jest-expo` + `@testing-library/react-native`; wire `test` script.
+- [x] Introduce stable `id` on `Pair` (e.g. `expo-crypto` randomUUID) with a
       persistence migration (zustand `persist` `version` + `migrate`) for existing
       stored data.
-- [ ] Fix all Known bugs above; delete dead code. Store logic gets unit tests
+- [x] Fix all Known bugs above; delete dead code. Store logic gets unit tests
       (add/update/delete/migration).
-- [ ] Restructure state: `savedPairList` → store-owned CRUD actions
+- [x] Restructure state: `savedPairList` → store-owned CRUD actions
       (`addPair`, `updatePair`, `deletePair`, `incrementTimesListened`); screen-local
       view state only. Remove `use-immer` if it no longer earns its place (zustand
       supports an immer middleware if draft-style updates are wanted).
-- [ ] Rewrite README to match reality (Zustand, @expo/vector-icons, SDK 57) and link
+- [x] Rewrite README to match reality (Zustand, @expo/vector-icons, SDK 57) and link
       this plan. Expand `AGENTS.md` with project conventions (folder layout, store
       patterns, testing expectations) so future AI sessions stay consistent.
 

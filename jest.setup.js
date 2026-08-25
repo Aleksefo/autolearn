@@ -3,6 +3,11 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 // expo-crypto is a native module; give tests a deterministic, unique UUID source.
+jest.mock('expo-keep-awake', () => ({
+  activateKeepAwakeAsync: jest.fn(async () => {}),
+  deactivateKeepAwake: jest.fn(),
+}));
+
 let mockUuidCounter = 0;
 jest.mock('expo-crypto', () => ({
   randomUUID: () =>

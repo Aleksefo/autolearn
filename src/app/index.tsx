@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Speech from 'expo-speech';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -11,11 +10,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CollapsiblePair } from '@/components/CollapsiblePair';
+import { SessionCountdown } from '@/components/SessionCountdown';
+import { usePlayback } from '@/state/playback';
 import { useAppStore } from '@/state/store';
 import { Pair } from '@/state/types';
 
 const DEFAULT_TIMER_MINUTES = 10;
-const SPEECH_RATE = 0.8;
 
 export default function Index() {
   const savedPairList = useAppStore(state => state.savedPairList);
@@ -23,6 +23,15 @@ export default function Index() {
   const targetLanguage = useAppStore(state => state.targetLanguage);
   const addPair = useAppStore(state => state.addPair);
   const deletePair = useAppStore(state => state.deletePair);
+
+  const playbackStatus = usePlayback(state => state.status);
+  const sessionEndsAt = usePlayback(state => state.sessionEndsAt);
+  const play = usePlayback(state => state.play);
+  const playTimed = usePlayback(state => state.playTimed);
+  const pause = usePlayback(state => state.pause);
+  const resume = usePlayback(state => state.resume);
+  const skipNext = usePlayback(state => state.skipNext);
+  const stop = usePlayback(state => state.stop);
 
   const [term, setTerm] = useState('');
   const [definition, setDefinition] = useState('');
@@ -33,11 +42,7 @@ export default function Index() {
   const [shuffledIds, setShuffledIds] = useState<string[] | null>(null);
   const [expandedPairId, setExpandedPairId] = useState<string | null>(null);
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isTimed, setIsTimed] = useState(false);
-  const [timeStarted, setTimeStarted] = useState(0);
   const [timerText, setTimerText] = useState(String(DEFAULT_TIMER_MINUTES));
-  const [wordsLeft, setWordsLeft] = useState(0);
 
   const pairList = useMemo(() => {
     if (!shuffledIds) return savedPairList;
@@ -56,52 +61,18 @@ export default function Index() {
     setDefinition('');
   };
 
-  const startTimedPlayback = () => {
-    if (!timerIsValid) return;
-    setIsTimed(true);
-    // eslint-disable-next-line react-hooks/purity -- event handler, not render; session timing moves into the Phase 2 playback engine
-    setTimeStarted(Date.now());
-    startPlayback();
-  };
+  const pairIds = () => pairList.map(pair => pair.id);
 
-  const startPlayback = () => {
-    setIsPlaying(true);
-    setWordsLeft(pairList.length);
-    pairList.forEach((pair, index) => {
-      Speech.speak(pair.term, {
-        language: pair.sourceLanguage,
-        rate: SPEECH_RATE,
-        onDone: () => useAppStore.getState().incrementTimesListened(pair.id),
-      });
-      Speech.speak(pair.definition, {
-        language: pair.targetLanguage,
-        rate: SPEECH_RATE,
-        onDone: () => setWordsLeft(pairList.length - index - 1),
-      });
-    });
-  };
-
-  const stopPlayback = () => {
-    setIsPlaying(false);
-    setIsTimed(false);
-    setTimeStarted(0);
-    Speech.stop();
-  };
-
-  // Playback currently loops by restarting when the queue drains; replaced by a
-  // proper playback engine in Phase 2 of docs/DEVELOPMENT_PLAN.md.
-  useEffect(() => {
-    if (isTimed && Date.now() >= timeStarted + 60000 * timerMinutes) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- legacy restart loop, replaced by the Phase 2 playback engine
-      stopPlayback();
-    } else if (wordsLeft === 0 && isPlaying) {
-      startPlayback();
+  const onPlayPress = () => {
+    if (playbackStatus === 'paused') {
+      resume();
+    } else {
+      play(pairIds());
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wordsLeft]);
+  };
 
   const randomizePairList = () => {
-    const ids = pairList.map(pair => pair.id);
+    const ids = pairIds();
     for (let i = ids.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [ids[i], ids[j]] = [ids[j], ids[i]];
@@ -145,10 +116,14 @@ export default function Index() {
         style={styles.terms}
       />
       <View style={styles.controlsContainer}>
-        <TouchableOpacity onPress={randomizePairList}>
+        <TouchableOpacity
+          onPress={randomizePairList}
+          accessibilityLabel="Shuffle pairs"
+        >
           <Ionicons name="shuffle" size={32} color="black" />
         </TouchableOpacity>
         <View style={styles.timerRow}>
+          <SessionCountdown endsAt={sessionEndsAt} />
           <TextInput
             placeholder="Timer"
             value={timerText}
@@ -158,8 +133,9 @@ export default function Index() {
             onChangeText={text => setTimerText(text.replace(/[^0-9]/g, ''))}
           />
           <TouchableOpacity
-            onPress={startTimedPlayback}
+            onPress={() => playTimed(pairIds(), timerMinutes)}
             disabled={!timerIsValid}
+            accessibilityLabel="Start timed playback"
           >
             <Ionicons
               name="timer-outline"
@@ -170,17 +146,44 @@ export default function Index() {
         </View>
       </View>
       <View style={styles.playbackContainer}>
+        {playbackStatus !== 'idle' && (
+          <TouchableOpacity
+            onPress={stop}
+            style={styles.sideControl}
+            accessibilityLabel="Stop playback"
+          >
+            <Ionicons name="stop-circle-outline" size={40} color="black" />
+          </TouchableOpacity>
+        )}
         <View style={styles.playback}>
-          {!isPlaying ? (
-            <TouchableOpacity onPress={startPlayback}>
-              <Ionicons name="play-circle-outline" size={64} color="black" />
+          {playbackStatus === 'playing' ? (
+            <TouchableOpacity onPress={pause} accessibilityLabel="Pause">
+              <Ionicons name="pause-circle-outline" size={64} color="black" />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={stopPlayback}>
-              <Ionicons name="stop-circle-outline" size={64} color="black" />
+            <TouchableOpacity
+              onPress={onPlayPress}
+              accessibilityLabel={
+                playbackStatus === 'paused' ? 'Resume' : 'Play'
+              }
+            >
+              <Ionicons name="play-circle-outline" size={64} color="black" />
             </TouchableOpacity>
           )}
         </View>
+        {playbackStatus !== 'idle' && (
+          <TouchableOpacity
+            onPress={skipNext}
+            style={styles.sideControl}
+            accessibilityLabel="Next pair"
+          >
+            <Ionicons
+              name="play-skip-forward-outline"
+              size={40}
+              color="black"
+            />
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -212,7 +215,7 @@ const styles = StyleSheet.create({
   },
   timerRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
   },
   timerInput: {
     borderWidth: 1,
@@ -222,7 +225,22 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    gap: 16,
+  },
+  sideControl: {
+    backgroundColor: '#fff',
+    borderRadius: 40,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   playback: {
     backgroundColor: '#fff',

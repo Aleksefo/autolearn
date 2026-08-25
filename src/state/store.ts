@@ -2,29 +2,47 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 
-import { newId } from '../utils/id';
-import { Pair, State } from './types';
+import { newId } from '@/utils/id';
+import { Pair, PlaybackSettings, State } from './types';
 
-export const STORAGE_VERSION = 1;
+export const STORAGE_VERSION = 2;
+
+// Defaults preserve pre-settings behavior: rate 0.8, no gap, endless loop.
+export const DEFAULT_PLAYBACK_SETTINGS: PlaybackSettings = {
+  rate: 0.8,
+  gapMs: 0,
+  repeatsPerPair: 1,
+  loop: true,
+  shuffleEachLoop: false,
+};
 
 type PersistedState = Pick<
   State,
-  'savedPairList' | 'sourceLanguage' | 'targetLanguage'
+  'savedPairList' | 'sourceLanguage' | 'targetLanguage' | 'playbackSettings'
 >;
 
-// Data persisted before STORAGE_VERSION 1 has pairs without ids.
+// v1: pairs gained stable ids. v2: playback settings joined the persisted state.
 export function migrateState(
   persisted: unknown,
   version: number,
 ): PersistedState {
-  const state = persisted as PersistedState;
+  let state = persisted as PersistedState;
   if (version < 1) {
-    return {
+    state = {
       ...state,
       savedPairList: (state.savedPairList ?? []).map(pair => ({
         ...pair,
         id: pair.id ?? newId(),
       })),
+    };
+  }
+  if (version < 2) {
+    state = {
+      ...state,
+      playbackSettings: {
+        ...DEFAULT_PLAYBACK_SETTINGS,
+        ...state.playbackSettings,
+      },
     };
   }
   return state;
@@ -37,6 +55,7 @@ export const useAppStore = create<State>()(
         savedPairList: [],
         sourceLanguage: 'es',
         targetLanguage: 'en',
+        playbackSettings: DEFAULT_PLAYBACK_SETTINGS,
         addPair: input =>
           set(state => {
             const now = Date.now();
@@ -70,6 +89,10 @@ export const useAppStore = create<State>()(
                 ? { ...pair, timesListened: pair.timesListened + 1 }
                 : pair,
             ),
+          })),
+        updatePlaybackSettings: patch =>
+          set(state => ({
+            playbackSettings: { ...state.playbackSettings, ...patch },
           })),
       }),
       {

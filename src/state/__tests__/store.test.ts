@@ -1,4 +1,9 @@
-import { migrateState, useAppStore } from '../store';
+import {
+  DEFAULT_PLAYBACK_SETTINGS,
+  migrateState,
+  STORAGE_VERSION,
+  useAppStore,
+} from '../store';
 import { Pair } from '../types';
 
 const initialState = useAppStore.getState();
@@ -120,12 +125,27 @@ describe('migrateState', () => {
     expect(migrated.savedPairList).toEqual([]);
   });
 
+  it('adds default playback settings to version-1 state', () => {
+    const migrated = migrateState(
+      {
+        savedPairList: [{ ...legacyPair, id: 'existing-id' }],
+        sourceLanguage: 'es',
+        targetLanguage: 'en',
+      },
+      1,
+    );
+
+    expect(migrated.savedPairList[0].id).toBe('existing-id');
+    expect(migrated.playbackSettings).toEqual(DEFAULT_PLAYBACK_SETTINGS);
+  });
+
   it('returns current-version state untouched', () => {
     const state = {
       savedPairList: [{ ...legacyPair, id: 'existing-id' }],
       sourceLanguage: 'es',
       targetLanguage: 'en',
+      playbackSettings: { ...DEFAULT_PLAYBACK_SETTINGS, rate: 1 },
     };
-    expect(migrateState(state, 1)).toBe(state);
+    expect(migrateState(state, STORAGE_VERSION)).toBe(state);
   });
 });

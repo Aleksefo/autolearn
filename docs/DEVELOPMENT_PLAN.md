@@ -112,25 +112,28 @@ works; app behaves identically otherwise.
 
 The core of the product; isolate it from UI.
 
-- [ ] Extract a `usePlayback` hook (or small state machine module) that owns: the
+- [x] Extract a `usePlayback` hook (or small state machine module) that owns: the
       queue (ordered pair ids), current position, status
       (`idle | playing | paused | stopped`), loop mode, session timer, and rate. It
       speaks one pair at a time (term → configurable gap → definition → gap) instead
       of enqueueing the entire list into expo-speech at once — this makes
       pause/resume/skip possible and keeps callbacks fresh.
-- [ ] Playback settings (persisted in the store): rate (currently hardcoded 0.8),
+- [x] Playback settings (persisted in the store): rate (currently hardcoded 0.8),
       gap between pairs, repeats per pair, loop on/off, shuffle-each-loop on/off.
-- [ ] Timed sessions: validated minutes input, countdown surfaced in the UI, clean
+- [x] Timed sessions: validated minutes input, countdown surfaced in the UI, clean
       stop at expiry.
-- [ ] `incrementTimesListened` fires per completed pair directly against the store
+- [x] `incrementTimesListened` fires per completed pair directly against the store
       (survives app kill mid-session).
-- [ ] Decision point: **background audio.** expo-speech does not keep speaking when
+- [x] Decision point: **background audio.** expo-speech does not keep speaking when
       the app is backgrounded on iOS. Options: (a) v1.0 ships foreground-only with
       keep-awake (`expo-keep-awake`) and is honest about it; (b) investigate an iOS
       background-audio session (`UIBackgroundModes: [audio]` + expo-audio silent
       session) — spike this in a branch before committing. Recommendation: ship (a),
       spike (b) for v1.1, since "while you go about your day" is the app's promise.
-- [ ] Unit tests for the queue/state machine (mock `expo-speech`).
+      _Decision (Aug 25, 2026): went with (a) — the engine holds a keep-awake lock
+      (tag `autolearn-playback`) while playing and releases it on pause/stop. Spike
+      (b) stays on the v1.1 list._
+- [x] Unit tests for the queue/state machine (mock `expo-speech`).
 
 Acceptance: play, pause, resume, skip, stop, loop, and timed sessions all work; killing
 the app never loses listen counts; no `useEffect`-driven playback restarts remain.

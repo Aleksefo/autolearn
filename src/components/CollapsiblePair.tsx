@@ -1,7 +1,7 @@
-import Ionicons from '@expo/vector-icons/Ionicons'
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-import { Pair } from '@/src/state/types'
+import { Pair } from "@/state/types";
 
 export function CollapsiblePair({
   pair,
@@ -9,25 +9,26 @@ export function CollapsiblePair({
   onToggle,
   isOpen,
 }: {
-  pair: Pair
-  onDelete: () => void
-  onToggle: () => void
-  isOpen: boolean
+  pair: Pair;
+  onDelete: () => void;
+  onToggle: () => void;
+  isOpen: boolean;
 }) {
   return (
     <View style={styles.pairContainer}>
       <View style={styles.pair}>
         <View style={styles.textWrapper}>
           <Text style={styles.text}>{pair.term}</Text>
-          <View style={{ backgroundColor: '#b1b1b1', height: 1 }} />
+          <View style={{ backgroundColor: "#b1b1b1", height: 1 }} />
           <Text style={styles.text}>{pair.definition}</Text>
         </View>
         <TouchableOpacity
           style={styles.heading}
           onPress={onToggle}
-          activeOpacity={0.8}>
+          activeOpacity={0.8}
+        >
           <Ionicons
-            name={isOpen ? 'chevron-down' : 'chevron-forward-outline'}
+            name={isOpen ? "chevron-down" : "chevron-forward-outline"}
             size={18}
           />
         </TouchableOpacity>
@@ -41,13 +42,13 @@ export function CollapsiblePair({
         </View>
       )}
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   heading: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   content: {
@@ -57,19 +58,19 @@ const styles = StyleSheet.create({
   testButton: { margin: 8 },
   pairContainer: {},
   underPair: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   pair: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f8f8f8',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#f8f8f8",
     padding: 4,
     borderRadius: 8,
     marginVertical: 4,
-    borderColor: '#686868',
+    borderColor: "#686868",
     borderWidth: 1,
   },
   textWrapper: {
@@ -79,7 +80,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   delete: {
-    color: 'red',
+    color: "red",
   },
   container: {
     flex: 1,
@@ -88,19 +89,19 @@ const styles = StyleSheet.create({
   header: {
     marginTop: 24,
     marginBottom: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   headerText: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#777',
+    borderColor: "#777",
     borderRadius: 8,
     padding: 8,
     margin: 8,
@@ -108,4 +109,4 @@ const styles = StyleSheet.create({
   terms: {
     marginTop: 0,
   },
-})
+});

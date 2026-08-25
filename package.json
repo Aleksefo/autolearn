@@ -8,6 +8,7 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.16",
     "expo-constants": "~57.0.14",
+    "expo-dev-client": "~57.0.15",
     "expo-device": "~57.0.1",
     "expo-font": "~57.0.1",
     "expo-glass-effect": "~57.0.1",
@@ -38,11 +39,11 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --port 8095",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
+    "android": "expo start --android --port 8095",
+    "ios": "expo start --ios --port 8095",
+    "web": "expo start --web --port 8095",
     "lint": "expo lint"
   },
   "private": true

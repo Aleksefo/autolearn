@@ -14,7 +14,8 @@ audio exposure — not quizzes or gamification.
 
 Feature-complete for v1.0 means:
 
-1. Manage vocabulary pairs (add, edit, delete, deactivate) with per-pair languages.
+1. Manage vocabulary pairs (add, edit, delete, deactivate, archive, rate, sort) with
+   per-pair languages.
 2. Robust playback: play/pause/stop, loop, shuffle, adjustable rate and pause between
    pairs, timed sessions, and repeat-count per pair.
 3. Language & voice settings (device voices via `Speech.getAvailableVoicesAsync`).
@@ -140,25 +141,60 @@ the app never loses listen counts; no `useEffect`-driven playback restarts remai
 
 ## Phase 3 — Features
 
-- [ ] **Settings screen** (new route): default source/target languages, voice picker
-      per language (`Speech.getAvailableVoicesAsync`), playback defaults, data export.
-      Languages are currently hardcoded `es`/`en` in the store with no UI.
-- [ ] **Pair management:** edit existing pairs (term, definition, languages), swap
-      term/definition direction, toggle `status` active/inactive (inactive pairs are
-      skipped in playback but kept in the list), swipe-to-delete with undo.
-- [ ] **Familiarity:** simple v1 — a manual 0–5 rating per pair plus an automatic
-      nudge from `timesListened`; playback option "prioritize least familiar" that
-      weights the shuffle. (Full SRS is out of scope for v1.0.)
-- [ ] **Stats:** lightweight — per-pair listen counts already exist; add a small
-      summary (total pairs, total listens, listens this week) on the main screen or
-      settings. Not a full dashboard.
-- [ ] **Import/export:** CSV/JSON export via share sheet, CSV import (unblocks users
+_Aug 25, 2026: expanded with the owner's feature wishlist. One wishlist item —
+keep-awake during playback — already shipped in Phase 2._
+
+> **Phase 3 landed (Aug 25, 2026).** Settings screen at `/settings` (languages +
+> voices, playback defaults, stats, import/export), status/archive with a
+> "Learned" section, inline pair editing, swipe-to-delete with undo, familiarity
+> rating with weighted shuffle, sort + counts + current-pair highlight, CSV/JSON
+> export via share sheet and CSV import (expo-document-picker + expo-file-system),
+> empty state with es→en starter pairs. Storage version 3 adds
+> `dailyListenCounts` for the weekly stat. **Keyboard-language findings:** there
+> is no cross-platform API to force a keyboard language — iOS offers none, and
+> Android's IME locale hints are not exposed through React Native's public
+> `TextInput` API. What shipped: vocabulary inputs disable
+> autocorrect/autocapitalize/spellcheck (`ClearableInput`) so foreign-language
+> typing isn't fought by the OS keyboard._
+
+- [x] **Settings screen** (new route): default source/target languages, voice picker
+      per language (`Speech.getAvailableVoicesAsync`), playback defaults — speed
+      (rate), gap, repeats, loop, shuffle-each-loop — and data export. Languages are
+      currently hardcoded `es`/`en` in the store with no UI.
+- [x] **Pair status & archive:** toggle pairs active/inactive, and archive learned
+      pairs. Extend `Pair.status` to `'active' | 'inactive' | 'archived'` (no data
+      migration needed; existing values stay valid). Inactive and archived pairs are
+      skipped in playback. Archived pairs render at the bottom of the home list under
+      a separator, like finished to-dos.
+- [x] **Pair editing:** edit term/definition/languages, swap term/definition
+      direction, swipe-to-delete with undo. The expanded card shows when the pair was
+      added (`createdAt`) alongside listen count.
+- [x] **Add-pair input polish:** clear-text buttons on both inputs
+      (`clearButtonMode` on iOS, custom clear icon on Android); duplicate check on
+      add — warn when the term already exists instead of silently creating a copy.
+      Investigate per-field keyboard language: there is no cross-platform API to
+      force a keyboard language (iOS offers none); do what's possible (Android IME
+      hints, disable autocorrect/spellcheck on foreign-language fields) and record
+      findings here.
+- [x] **Familiarity:** manual 1–5 rating per pair (0 = unrated, the default) set from
+      the expanded card, plus an automatic nudge from `timesListened`. Weighted
+      playback and shuffle: more familiar pairs come up less often in both ordered
+      loops (via shuffle-each-loop) and random mode. (Full SRS is out of scope for
+      v1.0.)
+- [x] **List controls:** sort by name, date added, or times listened; header shows
+      total pair count with inactive/archived counted separately; the currently
+      playing pair is highlighted in the list (the engine already exposes
+      `queue`/`currentIndex`).
+- [x] **Stats:** lightweight — total pairs, total listens, listens this week, on the
+      main screen or settings. Not a full dashboard.
+- [x] **Import/export:** CSV/JSON export via share sheet, CSV import (unblocks users
       with existing word lists; also the de-facto backup story given no cloud sync).
-- [ ] **Empty state & onboarding:** first-launch explanation of the passive-listening
+- [x] **Empty state & onboarding:** first-launch explanation of the passive-listening
       concept, sample starter pairs offered per language pair.
 
 Acceptance: a new user can install, pick languages, add or import vocabulary, listen,
-and see progress without touching code or defaults.
+and see progress without touching code or defaults; a long-time user can rate, sort,
+archive, and hear less of what they already know.
 
 ## Phase 4 — Design & UX
 
@@ -176,11 +212,12 @@ mode). Do this after features so the design pass covers real screens.
       via `expo-symbols` on iOS.
 - [ ] Main screen layout: proper header, prominent play control, readable list rows
       (current rows are cramped 4 px-padding cards), animation polish
-      (react-native-reanimated is installed) and haptics on key actions.
+      (react-native-reanimated is installed) and haptics on key actions. Card text
+      renders lowercase as part of the type treatment.
 - [ ] Accessibility: labels on all icon-only buttons (shuffle/play/delete currently
       have none), dynamic type, contrast check on the final palette.
-- [ ] App icon/splash review on device (assets exist from the upgrade; verify they are
-      the intended branding, including the Android adaptive icon set).
+- [ ] App icon: design a proper Autolearn icon (the current assets are Expo template
+      leftovers) — iOS icon, Android adaptive set, splash — and verify on device.
 
 Acceptance: no hardcoded colors outside the theme module; light and dark screenshots
 look intentional; VoiceOver can operate every control.

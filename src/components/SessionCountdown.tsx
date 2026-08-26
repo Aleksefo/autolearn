@@ -33,5 +33,6 @@ const styles = StyleSheet.create({
   countdown: {
     fontVariant: ['tabular-nums'],
     marginRight: 8,
+    color: '#111',
   },
 });

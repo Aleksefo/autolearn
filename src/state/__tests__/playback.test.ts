@@ -133,19 +133,30 @@ describe('looping', () => {
   it('reshuffles the queue each loop when shuffleEachLoop is on', () => {
     const pairs = seedPairs(['uno', 'one'], ['dos', 'two']);
     useAppStore.getState().updatePlaybackSettings({ shuffleEachLoop: true });
-    const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
+    const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.9);
 
     const ids = pairs.map(pair => pair.id);
     usePlayback.getState().play(ids);
     finishUtterance(); // uno
     finishUtterance(); // one
     finishUtterance(); // dos
-    finishUtterance(); // two → loop restart, shuffled
+    finishUtterance(); // two → loop restart, weighted reshuffle
 
-    // With Math.random() === 0 a two-item Fisher–Yates shuffle swaps the items.
+    // Equal weights + Math.random() = 0.9 lands in the second item's slice,
+    // so the weighted shuffle picks it first.
     expect(usePlayback.getState().queue).toEqual([ids[1], ids[0]]);
     expect(usePlayback.getState().status).toBe('playing');
     randomSpy.mockRestore();
+  });
+
+  it('skips inactive and archived pairs in place', () => {
+    const pairs = seedPairs(['uno', 'one'], ['dos', 'two'], ['tres', 'three']);
+    useAppStore.getState().updatePair(pairs[0].id, { status: 'inactive' });
+    useAppStore.getState().updatePair(pairs[1].id, { status: 'archived' });
+
+    usePlayback.getState().play(pairs.map(pair => pair.id));
+
+    expect(spokenTexts()).toEqual(['tres']);
   });
 
   it('finishes cleanly when every queued pair was deleted mid-session', () => {

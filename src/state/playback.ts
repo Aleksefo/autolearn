@@ -2,6 +2,8 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Speech from 'expo-speech';
 import { create } from 'zustand';
 
+import { playbackWeight } from '@/utils/familiarity';
+import { weightedShuffle } from '@/utils/weightedShuffle';
 import { useAppStore } from './store';
 import { Pair } from './types';
 
@@ -54,14 +56,19 @@ const settings = () => useAppStore.getState().playbackSettings;
 const pairById = (id: string): Pair | undefined =>
   useAppStore.getState().savedPairList.find(pair => pair.id === id);
 
-const shuffled = (ids: string[]): string[] => {
-  const result = [...ids];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
+// Only active pairs are spoken; inactive/archived (and deleted) ones are
+// skipped in place so mid-session status changes take effect immediately.
+const playablePairById = (id: string): Pair | undefined => {
+  const pair = pairById(id);
+  return pair?.status === 'active' ? pair : undefined;
 };
+
+// Familiarity-weighted reshuffle: better-known pairs drift later in the loop.
+const reshuffled = (ids: string[]): string[] =>
+  weightedShuffle(ids, id => {
+    const pair = playablePairById(id);
+    return pair ? playbackWeight(pair) : 0.01;
+  });
 
 const afterGap = (gen: number, step: () => void) => {
   gapTimer = setTimeout(() => {
@@ -74,14 +81,15 @@ const speakCurrentPair = (gen: number) => {
   if (gen !== generation) return;
   const { status, queue, currentIndex } = usePlayback.getState();
   if (status !== 'playing') return;
-  const pair = pairById(queue[currentIndex]);
+  const pair = playablePairById(queue[currentIndex]);
   if (!pair) {
-    // The pair was deleted mid-session; move on.
+    // Deleted or no longer active; move on.
     advance(gen);
     return;
   }
   Speech.speak(pair.term, {
     language: pair.sourceLanguage,
+    voice: useAppStore.getState().sourceVoice,
     rate: settings().rate,
     onDone: () => {
       if (gen === generation) afterGap(gen, () => speakDefinition(gen, pair));
@@ -93,6 +101,7 @@ const speakDefinition = (gen: number, pair: Pair) => {
   if (gen !== generation) return;
   Speech.speak(pair.definition, {
     language: pair.targetLanguage,
+    voice: useAppStore.getState().targetVoice,
     rate: settings().rate,
     onDone: () => {
       if (gen !== generation) return;
@@ -117,11 +126,14 @@ const advance = (gen: number) => {
       currentIndex: state.currentIndex + 1,
       currentRepeat: 0,
     });
-  } else if (loop && state.queue.some(id => pairById(id) !== undefined)) {
-    // The liveness check keeps a loop over fully-deleted pairs from recursing
-    // through speakCurrentPair → advance forever.
+  } else if (
+    loop &&
+    state.queue.some(id => playablePairById(id) !== undefined)
+  ) {
+    // The liveness check keeps a loop with no playable pairs left from
+    // recursing through speakCurrentPair → advance forever.
     usePlayback.setState({
-      queue: shuffleEachLoop ? shuffled(state.queue) : state.queue,
+      queue: shuffleEachLoop ? reshuffled(state.queue) : state.queue,
       currentIndex: 0,
       currentRepeat: 0,
     });

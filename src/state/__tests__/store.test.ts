@@ -1,5 +1,7 @@
 import {
+  dateKey,
   DEFAULT_PLAYBACK_SETTINGS,
+  listensThisWeek,
   migrateState,
   STORAGE_VERSION,
   useAppStore,
@@ -71,6 +73,46 @@ describe('deletePair', () => {
   });
 });
 
+describe('restorePair', () => {
+  it('reinserts a deleted pair at its original index', () => {
+    addPair('uno', 'one');
+    addPair('dos', 'two');
+    addPair('tres', 'three');
+    const deleted = useAppStore.getState().savedPairList[1];
+
+    useAppStore.getState().deletePair(deleted.id);
+    useAppStore.getState().restorePair(deleted, 1);
+
+    expect(useAppStore.getState().savedPairList.map(pair => pair.term)).toEqual(
+      ['tres', 'dos', 'uno'],
+    );
+  });
+});
+
+describe('importPairs', () => {
+  it('prepends all imported pairs with unique ids', () => {
+    addPair('uno', 'one');
+    useAppStore.getState().importPairs([
+      {
+        term: 'dos',
+        definition: 'two',
+        sourceLanguage: 'es',
+        targetLanguage: 'en',
+      },
+      {
+        term: 'tres',
+        definition: 'three',
+        sourceLanguage: 'es',
+        targetLanguage: 'en',
+      },
+    ]);
+
+    const list = useAppStore.getState().savedPairList;
+    expect(list.map(pair => pair.term)).toEqual(['dos', 'tres', 'uno']);
+    expect(new Set(list.map(pair => pair.id)).size).toBe(3);
+  });
+});
+
 describe('incrementTimesListened', () => {
   it('increments only the matching pair', () => {
     addPair('uno', 'one');
@@ -83,6 +125,33 @@ describe('incrementTimesListened', () => {
     const [incremented, untouched] = useAppStore.getState().savedPairList;
     expect(incremented.timesListened).toBe(2);
     expect(untouched.timesListened).toBe(0);
+  });
+
+  it('records listens per day and prunes old days', () => {
+    addPair('uno', 'one');
+    const target = useAppStore.getState().savedPairList[0];
+    useAppStore.setState({
+      dailyListenCounts: { '2001-01-01': 7 }, // far past the retention window
+    });
+
+    useAppStore.getState().incrementTimesListened(target.id);
+    useAppStore.getState().incrementTimesListened(target.id);
+
+    const counts = useAppStore.getState().dailyListenCounts;
+    expect(counts[dateKey(Date.now())]).toBe(2);
+    expect(counts['2001-01-01']).toBeUndefined();
+  });
+});
+
+describe('listensThisWeek', () => {
+  it('sums only the trailing seven days', () => {
+    const now = Date.now();
+    const counts = {
+      [dateKey(now)]: 2,
+      [dateKey(now - 3 * 86_400_000)]: 3,
+      [dateKey(now - 10 * 86_400_000)]: 50,
+    };
+    expect(listensThisWeek(counts, now)).toBe(5);
   });
 });
 
@@ -139,12 +208,28 @@ describe('migrateState', () => {
     expect(migrated.playbackSettings).toEqual(DEFAULT_PLAYBACK_SETTINGS);
   });
 
+  it('adds empty daily listen counts to version-2 state', () => {
+    const migrated = migrateState(
+      {
+        savedPairList: [{ ...legacyPair, id: 'existing-id' }],
+        sourceLanguage: 'es',
+        targetLanguage: 'en',
+        playbackSettings: { ...DEFAULT_PLAYBACK_SETTINGS, rate: 1 },
+      },
+      2,
+    );
+
+    expect(migrated.dailyListenCounts).toEqual({});
+    expect(migrated.playbackSettings.rate).toBe(1);
+  });
+
   it('returns current-version state untouched', () => {
     const state = {
       savedPairList: [{ ...legacyPair, id: 'existing-id' }],
       sourceLanguage: 'es',
       targetLanguage: 'en',
       playbackSettings: { ...DEFAULT_PLAYBACK_SETTINGS, rate: 1 },
+      dailyListenCounts: {},
     };
     expect(migrateState(state, STORAGE_VERSION)).toBe(state);
   });

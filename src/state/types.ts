@@ -1,3 +1,5 @@
+export type PairStatus = 'active' | 'inactive' | 'archived';
+
 export type Pair = {
   id: string;
   term: string;
@@ -7,7 +9,9 @@ export type Pair = {
   createdAt: number;
   modifiedAt: number;
   timesListened: number;
-  status: 'active' | 'inactive';
+  /** inactive: temporarily out of playback. archived: learned, listed at the bottom. */
+  status: PairStatus;
+  /** Manual rating 1–5; 0 = unrated. */
   familiarity: number;
 };
 
@@ -27,18 +31,33 @@ export type PlaybackSettings = {
   repeatsPerPair: number;
   /** Restart from the top when the queue drains. */
   loop: boolean;
-  /** Reshuffle the queue on every loop restart. */
+  /** Reshuffle the queue (familiarity-weighted) on every loop restart. */
   shuffleEachLoop: boolean;
 };
+
+export type LanguageSettings = Partial<
+  Pick<
+    State,
+    'sourceLanguage' | 'targetLanguage' | 'sourceVoice' | 'targetVoice'
+  >
+>;
 
 export interface State {
   savedPairList: Pair[];
   sourceLanguage: string;
   targetLanguage: string;
+  /** Specific device voice ids for each direction; undefined = system default. */
+  sourceVoice?: string;
+  targetVoice?: string;
   playbackSettings: PlaybackSettings;
+  /** Listen counts per day (YYYY-MM-DD), pruned to the last 14 days. */
+  dailyListenCounts: Record<string, number>;
   addPair: (input: NewPairInput) => void;
+  importPairs: (inputs: NewPairInput[]) => void;
   updatePair: (id: string, patch: Partial<Omit<Pair, 'id'>>) => void;
   deletePair: (id: string) => void;
+  restorePair: (pair: Pair, index: number) => void;
   incrementTimesListened: (id: string) => void;
   updatePlaybackSettings: (patch: Partial<PlaybackSettings>) => void;
+  updateLanguages: (patch: LanguageSettings) => void;
 }

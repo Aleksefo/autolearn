@@ -1,4 +1,8 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/ui/Text';
+import { Radii, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 export function OptionChips<T extends string | number>({
   options,
@@ -9,24 +13,32 @@ export function OptionChips<T extends string | number>({
   selected: T;
   onSelect: (value: T) => void;
 }) {
+  const colors = useTheme();
+
   return (
     <View style={styles.row}>
       {options.map(option => {
         const isSelected = option.value === selected;
         return (
-          <TouchableOpacity
+          <Pressable
             key={String(option.value)}
             onPress={() => onSelect(option.value)}
-            style={[styles.chip, isSelected && styles.chipSelected]}
+            accessibilityRole="button"
             accessibilityLabel={option.label}
             accessibilityState={{ selected: isSelected }}
+            style={[
+              styles.chip,
+              { borderColor: colors.border },
+              isSelected && {
+                backgroundColor: colors.primary,
+                borderColor: colors.primary,
+              },
+            ]}
           >
-            <Text
-              style={[styles.chipText, isSelected && styles.chipTextSelected]}
-            >
+            <Text variant="caption" color={isSelected ? 'onPrimary' : 'text'}>
               {option.label}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </View>
@@ -37,24 +49,12 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: Spacing.two,
   },
   chip: {
     borderWidth: 1,
-    borderColor: '#999',
-    borderRadius: 16,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-  },
-  chipSelected: {
-    backgroundColor: '#333',
-    borderColor: '#333',
-  },
-  chipText: {
-    color: '#333',
-    fontSize: 13,
-  },
-  chipTextSelected: {
-    color: '#fff',
+    borderRadius: Radii.full,
+    paddingVertical: Spacing.one + Spacing.half,
+    paddingHorizontal: Spacing.three,
   },
 });

@@ -223,6 +223,21 @@ describe('migrateState', () => {
     expect(migrated.playbackSettings.rate).toBe(1);
   });
 
+  it('adds the system theme default to version-3 state', () => {
+    const migrated = migrateState(
+      {
+        savedPairList: [{ ...legacyPair, id: 'existing-id' }],
+        sourceLanguage: 'es',
+        targetLanguage: 'en',
+        playbackSettings: { ...DEFAULT_PLAYBACK_SETTINGS },
+        dailyListenCounts: {},
+      },
+      3,
+    );
+
+    expect(migrated.theme).toBe('system');
+  });
+
   it('returns current-version state untouched', () => {
     const state = {
       savedPairList: [{ ...legacyPair, id: 'existing-id' }],
@@ -230,6 +245,7 @@ describe('migrateState', () => {
       targetLanguage: 'en',
       playbackSettings: { ...DEFAULT_PLAYBACK_SETTINGS, rate: 1 },
       dailyListenCounts: {},
+      theme: 'dark' as const,
     };
     expect(migrateState(state, STORAGE_VERSION)).toBe(state);
   });

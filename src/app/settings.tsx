@@ -4,20 +4,18 @@ import { File } from 'expo-file-system';
 import * as Speech from 'expo-speech';
 import type { Voice } from 'expo-speech';
 import { useEffect, useState } from 'react';
-import {
-  Alert,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, ScrollView, Share, StyleSheet, View } from 'react-native';
 
 import { LanguageVoicePicker } from '@/components/LanguageVoicePicker';
 import { OptionChips } from '@/components/OptionChips';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { Button } from '@/components/ui/Button';
+import { Switch } from '@/components/ui/Switch';
+import { Text } from '@/components/ui/Text';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { listensThisWeek, useAppStore } from '@/state/store';
+import { ThemeSetting } from '@/state/types';
 import { parsePairsCsv, serializePairsToCsv } from '@/utils/csv';
 
 const REPEAT_OPTIONS = [1, 2, 3].map(value => ({
@@ -25,7 +23,15 @@ const REPEAT_OPTIONS = [1, 2, 3].map(value => ({
   value,
 }));
 
+const THEME_SEGMENTS: { value: ThemeSetting; label: string }[] = [
+  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
+
 export default function Settings() {
+  const colors = useTheme();
+
   const savedPairList = useAppStore(state => state.savedPairList);
   const sourceLanguage = useAppStore(state => state.sourceLanguage);
   const targetLanguage = useAppStore(state => state.targetLanguage);
@@ -33,6 +39,8 @@ export default function Settings() {
   const targetVoice = useAppStore(state => state.targetVoice);
   const playbackSettings = useAppStore(state => state.playbackSettings);
   const dailyListenCounts = useAppStore(state => state.dailyListenCounts);
+  const theme = useAppStore(state => state.theme);
+  const setTheme = useAppStore(state => state.setTheme);
   const updateLanguages = useAppStore(state => state.updateLanguages);
   const updatePlaybackSettings = useAppStore(
     state => state.updatePlaybackSettings,
@@ -107,8 +115,22 @@ export default function Settings() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.sectionTitle}>Languages</Text>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
+    >
+      <Text variant="heading" style={styles.sectionTitle}>
+        Appearance
+      </Text>
+      <SegmentedControl
+        segments={THEME_SEGMENTS}
+        value={theme}
+        onChange={setTheme}
+      />
+
+      <Text variant="heading" style={styles.sectionTitle}>
+        Languages
+      </Text>
       <LanguageVoicePicker
         label="Term language"
         voices={voices}
@@ -127,12 +149,14 @@ export default function Settings() {
           updateLanguages({ targetLanguage: language, targetVoice: voice })
         }
       />
-      <Text style={styles.hint}>
+      <Text variant="caption" color="textSecondary">
         New pairs use these languages; each pair keeps its own.
       </Text>
 
-      <Text style={styles.sectionTitle}>Playback</Text>
-      <Text style={styles.settingLabel}>
+      <Text variant="heading" style={styles.sectionTitle}>
+        Playback
+      </Text>
+      <Text variant="bodyBold">
         {`Speed: ${playbackSettings.rate.toFixed(1)}×`}
       </Text>
       <Host matchContents={{ vertical: true }} style={styles.slider}>
@@ -146,7 +170,7 @@ export default function Settings() {
           }
         />
       </Host>
-      <Text style={styles.settingLabel}>
+      <Text variant="bodyBold">
         {`Pause between words: ${(playbackSettings.gapMs / 1000).toFixed(1)}s`}
       </Text>
       <Host matchContents={{ vertical: true }} style={styles.slider}>
@@ -160,14 +184,14 @@ export default function Settings() {
           }
         />
       </Host>
-      <Text style={styles.settingLabel}>Repeats per pair</Text>
+      <Text variant="bodyBold">Repeats per pair</Text>
       <OptionChips
         options={REPEAT_OPTIONS}
         selected={playbackSettings.repeatsPerPair}
         onSelect={repeatsPerPair => updatePlaybackSettings({ repeatsPerPair })}
       />
       <View style={styles.switchRow}>
-        <Text style={styles.settingLabel}>Loop playback</Text>
+        <Text variant="bodyBold">Loop playback</Text>
         <Switch
           value={playbackSettings.loop}
           onValueChange={loop => updatePlaybackSettings({ loop })}
@@ -175,8 +199,8 @@ export default function Settings() {
       </View>
       <View style={styles.switchRow}>
         <View style={styles.switchLabelGroup}>
-          <Text style={styles.settingLabel}>Shuffle each loop</Text>
-          <Text style={styles.hint}>
+          <Text variant="bodyBold">Shuffle each loop</Text>
+          <Text variant="caption" color="textSecondary">
             Familiarity-weighted: well-known pairs come up less often.
           </Text>
         </View>
@@ -188,24 +212,20 @@ export default function Settings() {
         />
       </View>
 
-      <Text style={styles.sectionTitle}>Stats</Text>
-      <Text style={styles.statLine}>{`Pairs: ${savedPairList.length}`}</Text>
-      <Text style={styles.statLine}>{`Total listens: ${totalListens}`}</Text>
-      <Text style={styles.statLine}>
-        {`Listens this week: ${listensThisWeek(dailyListenCounts)}`}
+      <Text variant="heading" style={styles.sectionTitle}>
+        Stats
       </Text>
+      <Text>{`Pairs: ${savedPairList.length}`}</Text>
+      <Text>{`Total listens: ${totalListens}`}</Text>
+      <Text>{`Listens this week: ${listensThisWeek(dailyListenCounts)}`}</Text>
 
-      <Text style={styles.sectionTitle}>Data</Text>
-      <TouchableOpacity style={styles.button} onPress={exportCsv}>
-        <Text style={styles.buttonText}>Export as CSV</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={exportJson}>
-        <Text style={styles.buttonText}>Export as JSON</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={importCsv}>
-        <Text style={styles.buttonText}>Import from CSV</Text>
-      </TouchableOpacity>
-      <Text style={styles.hint}>
+      <Text variant="heading" style={styles.sectionTitle}>
+        Data
+      </Text>
+      <Button title="Export as CSV" variant="secondary" onPress={exportCsv} />
+      <Button title="Export as JSON" variant="secondary" onPress={exportJson} />
+      <Button title="Import from CSV" variant="secondary" onPress={importCsv} />
+      <Text variant="caption" color="textSecondary">
         CSV columns: term, definition, sourceLanguage, targetLanguage. Rows
         already in your list are skipped.
       </Text>
@@ -214,57 +234,28 @@ export default function Settings() {
 }
 
 const styles = StyleSheet.create({
-  // Explicit light palette until Phase 4 theming.
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   content: {
-    padding: 16,
-    gap: 12,
-    paddingBottom: 48,
+    padding: Spacing.three,
+    gap: Spacing.two + Spacing.one,
+    paddingBottom: Spacing.six,
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    marginTop: 12,
-    color: '#111',
-  },
-  settingLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#111',
-  },
-  slider: {
-    width: '100%',
+    marginTop: Spacing.three,
   },
   switchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
+    gap: Spacing.two,
   },
   switchLabelGroup: {
     flex: 1,
-    gap: 2,
+    gap: Spacing.half,
   },
-  hint: {
-    color: '#666',
-    fontSize: 13,
-  },
-  statLine: {
-    fontSize: 15,
-    color: '#333',
-  },
-  button: {
-    borderWidth: 1,
-    borderColor: '#333',
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  buttonText: {
-    fontWeight: '600',
-    color: '#333',
+  slider: {
+    width: '100%',
   },
 });

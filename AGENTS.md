@@ -28,6 +28,22 @@ as new checkboxes instead of doing it silently.
   the persisted shape requires bumping `STORAGE_VERSION` and extending
   `migrateState`, plus a migration test.
 
+## Design system
+
+- Tokens live in `src/constants/theme.ts` (palette mirrored from the
+  UltimateAchiever app — keep them in sync when that design evolves). Never
+  hardcode hex colors in components; read colors via `useTheme()` and pass
+  static layout through `StyleSheet` with `Spacing`/`Radii`/`TypeScale`.
+- Build UI from `src/components/ui/` (Text, Icon, IconButton, Button, Input,
+  SegmentedControl, Switch) before reaching for raw RN primitives. Icons go
+  through `ui/Icon` (SF Symbols on iOS, Material on Android) — add new names to
+  its map rather than importing icon sets directly.
+- Both light and dark must work; the user can override the scheme in Settings
+  (`theme` in the store, resolved by `src/hooks/useColorScheme.ts`).
+- Haptics: use the wrappers in `src/utils/haptics.ts` on meaningful actions.
+- App icon/splash are generated — edit `scripts/generate-icons.mjs` and run
+  `node scripts/generate-icons.mjs`; never hand-edit the PNGs.
+
 ## Tooling
 
 - Package manager is **bun**; install Expo packages with `npx expo install`.
@@ -38,3 +54,6 @@ as new checkboxes instead of doing it silently.
   `bun run typecheck`, `bun run test`, and `bun run format` on changed files.
 - Tests: jest with the `jest-expo` preset; native modules are mocked in
   `jest.setup.js`. Store logic must have unit tests.
+- Adding a native module (`npx expo install` of anything non-JS) or changing
+  icons/splash/app.json requires a dev-client rebuild:
+  `npx expo prebuild -p android --clean && npx expo run:android --port 8095 --device`.

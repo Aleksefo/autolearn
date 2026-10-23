@@ -5,7 +5,7 @@ import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { newId } from '@/utils/id';
 import { NewPairInput, Pair, PlaybackSettings, State } from './types';
 
-export const STORAGE_VERSION = 3;
+export const STORAGE_VERSION = 4;
 
 // Defaults preserve pre-settings behavior: rate 0.8, no gap, endless loop.
 export const DEFAULT_PLAYBACK_SETTINGS: PlaybackSettings = {
@@ -50,10 +50,12 @@ type PersistedState = Pick<
   | 'targetVoice'
   | 'playbackSettings'
   | 'dailyListenCounts'
+  | 'theme'
 >;
 
 // v1: pairs gained stable ids. v2: playback settings joined the persisted
 // state. v3: daily listen counts (voice ids stay optional; no default needed).
+// v4: theme override setting.
 export function migrateState(
   persisted: unknown,
   version: number,
@@ -80,6 +82,9 @@ export function migrateState(
   if (version < 3) {
     state = { ...state, dailyListenCounts: {} };
   }
+  if (version < 4) {
+    state = { ...state, theme: 'system' };
+  }
   return state;
 }
 
@@ -94,6 +99,7 @@ export const useAppStore = create<State>()(
         targetVoice: undefined,
         playbackSettings: DEFAULT_PLAYBACK_SETTINGS,
         dailyListenCounts: {},
+        theme: 'system',
         addPair: input =>
           set(state => ({
             savedPairList: [
@@ -155,6 +161,7 @@ export const useAppStore = create<State>()(
             playbackSettings: { ...state.playbackSettings, ...patch },
           })),
         updateLanguages: patch => set(() => ({ ...patch })),
+        setTheme: theme => set(() => ({ theme })),
       }),
       {
         name: 'app-storage',

@@ -1,16 +1,17 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Icon } from '@/components/ui/Icon';
+import { IconButton } from '@/components/ui/IconButton';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Text } from '@/components/ui/Text';
+import { Radii, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useAppStore } from '@/state/store';
 import { Pair } from '@/state/types';
 import { MAX_FAMILIARITY } from '@/utils/familiarity';
+import { tapHaptic } from '@/utils/haptics';
 
 export function CollapsiblePair({
   pair,
@@ -25,6 +26,7 @@ export function CollapsiblePair({
   isOpen: boolean;
   isCurrent?: boolean;
 }) {
+  const colors = useTheme();
   const updatePair = useAppStore(state => state.updatePair);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -53,179 +55,186 @@ export function CollapsiblePair({
     setIsEditing(false);
   };
 
-  const swapDirection = () =>
+  const swapDirection = () => {
+    tapHaptic();
     updatePair(pair.id, {
       term: pair.definition,
       definition: pair.term,
       sourceLanguage: pair.targetLanguage,
       targetLanguage: pair.sourceLanguage,
     });
+  };
 
-  const setFamiliarity = (value: number) =>
+  const setFamiliarity = (value: number) => {
+    tapHaptic();
     // Tapping the current rating clears it back to unrated.
     updatePair(pair.id, {
       familiarity: pair.familiarity === value ? 0 : value,
     });
+  };
+
+  const setStatus = (status: Pair['status']) => {
+    tapHaptic();
+    updatePair(pair.id, { status });
+  };
 
   const isArchived = pair.status === 'archived';
   const isInactive = pair.status === 'inactive';
 
   return (
-    <View>
-      <View
-        style={[
-          styles.pair,
-          isInactive && styles.pairInactive,
-          isCurrent && styles.pairCurrent,
-        ]}
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: colors.backgroundElement },
+        isCurrent && {
+          backgroundColor: colors.primaryMuted,
+          borderColor: colors.primary,
+          borderWidth: 2,
+        },
+        isInactive && styles.inactive,
+      ]}
+    >
+      <Pressable
+        onPress={onToggle}
+        accessibilityRole="button"
+        accessibilityLabel={isOpen ? 'Collapse pair' : 'Expand pair'}
+        style={styles.row}
       >
         <View style={styles.textWrapper}>
-          <Text style={styles.text}>{pair.term}</Text>
-          <View style={styles.divider} />
-          <Text style={styles.text}>{pair.definition}</Text>
+          <Text variant="bodyBold" style={styles.word}>
+            {pair.term}
+          </Text>
+          <Text color="textSecondary" style={styles.word}>
+            {pair.definition}
+          </Text>
         </View>
-        <TouchableOpacity
-          style={styles.heading}
-          onPress={onToggle}
-          activeOpacity={0.8}
-          accessibilityLabel={isOpen ? 'Collapse pair' : 'Expand pair'}
-        >
-          <Ionicons
-            name={isOpen ? 'chevron-down' : 'chevron-forward-outline'}
-            size={18}
-          />
-        </TouchableOpacity>
-      </View>
+        <Icon
+          name={isOpen ? 'chevronDown' : 'chevronRight'}
+          size={18}
+          color="textSecondary"
+        />
+      </Pressable>
       {isOpen && !isEditing && (
         <View style={styles.details}>
           <View style={styles.metaRow}>
-            <Text style={styles.meta}>
+            <Text variant="caption" color="textSecondary">
               {`Added ${new Date(pair.createdAt).toLocaleDateString()}`}
             </Text>
-            <Text style={styles.meta}>
+            <Text variant="caption" color="textSecondary">
               {`Times listened: ${pair.timesListened}`}
             </Text>
           </View>
           <View style={styles.metaRow}>
             <View style={styles.stars}>
               {Array.from({ length: MAX_FAMILIARITY }, (_, index) => (
-                <TouchableOpacity
+                <Pressable
                   key={index}
                   onPress={() => setFamiliarity(index + 1)}
+                  accessibilityRole="button"
                   accessibilityLabel={`Set familiarity ${index + 1}`}
+                  hitSlop={4}
                 >
-                  <Ionicons
-                    name={pair.familiarity > index ? 'star' : 'star-outline'}
+                  <Icon
+                    name={pair.familiarity > index ? 'star' : 'starOutline'}
                     size={20}
-                    color="#555"
+                    color={
+                      pair.familiarity > index ? 'accent' : 'textSecondary'
+                    }
                   />
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
             <View style={styles.actions}>
               {!isArchived && (
-                <TouchableOpacity
-                  onPress={() =>
-                    updatePair(pair.id, {
-                      status: isInactive ? 'active' : 'inactive',
-                    })
-                  }
+                <IconButton
+                  name={isInactive ? 'eyeOff' : 'eye'}
+                  color="textSecondary"
+                  size={20}
+                  onPress={() => setStatus(isInactive ? 'active' : 'inactive')}
                   accessibilityLabel={
                     isInactive ? 'Activate pair' : 'Deactivate pair'
                   }
-                >
-                  <Ionicons
-                    name={isInactive ? 'eye-off-outline' : 'eye-outline'}
-                    size={22}
-                    color="#555"
-                  />
-                </TouchableOpacity>
+                />
               )}
-              <TouchableOpacity
-                onPress={() =>
-                  updatePair(pair.id, {
-                    status: isArchived ? 'active' : 'archived',
-                  })
-                }
+              <IconButton
+                name={isArchived ? 'undo' : 'archive'}
+                color="textSecondary"
+                size={20}
+                onPress={() => setStatus(isArchived ? 'active' : 'archived')}
                 accessibilityLabel={
                   isArchived ? 'Unarchive pair' : 'Archive as learned'
                 }
-              >
-                <Ionicons
-                  name={isArchived ? 'arrow-undo-outline' : 'school-outline'}
-                  size={22}
-                  color="#555"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
+              />
+              <IconButton
+                name="swap"
+                color="textSecondary"
+                size={20}
                 onPress={swapDirection}
                 accessibilityLabel="Swap term and definition"
-              >
-                <Ionicons name="swap-vertical-outline" size={22} color="#555" />
-              </TouchableOpacity>
-              <TouchableOpacity
+              />
+              <IconButton
+                name="edit"
+                color="textSecondary"
+                size={20}
                 onPress={startEditing}
                 accessibilityLabel="Edit pair"
-              >
-                <Ionicons name="pencil-outline" size={22} color="#555" />
-              </TouchableOpacity>
-              <TouchableOpacity
+              />
+              <IconButton
+                name="trash"
+                color="error"
+                size={20}
                 onPress={onDelete}
                 accessibilityLabel="Delete pair"
-              >
-                <Ionicons name="trash-outline" size={22} color="#a33" />
-              </TouchableOpacity>
+              />
             </View>
           </View>
         </View>
       )}
       {isOpen && isEditing && (
         <View style={styles.details}>
-          <TextInput
+          <Input
             value={editTerm}
             onChangeText={setEditTerm}
-            style={styles.editInput}
             placeholder="Term"
             autoCapitalize="none"
             autoCorrect={false}
-            placeholderTextColor="#888"
           />
-          <TextInput
+          <Input
             value={editDefinition}
             onChangeText={setEditDefinition}
-            style={styles.editInput}
             placeholder="Definition"
             autoCapitalize="none"
             autoCorrect={false}
-            placeholderTextColor="#888"
           />
-          <View style={styles.metaRow}>
-            <TextInput
-              value={editSource}
-              onChangeText={setEditSource}
-              style={[styles.editInput, styles.langInput]}
-              placeholder="Term lang (es)"
-              autoCapitalize="none"
-              autoCorrect={false}
-              placeholderTextColor="#888"
-            />
-            <TextInput
-              value={editTarget}
-              onChangeText={setEditTarget}
-              style={[styles.editInput, styles.langInput]}
-              placeholder="Definition lang (en)"
-              autoCapitalize="none"
-              autoCorrect={false}
-              placeholderTextColor="#888"
-            />
+          <View style={styles.langRow}>
+            <View style={styles.langInput}>
+              <Input
+                value={editSource}
+                onChangeText={setEditSource}
+                label="Term language"
+                placeholder="es"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+            <View style={styles.langInput}>
+              <Input
+                value={editTarget}
+                onChangeText={setEditTarget}
+                label="Definition language"
+                placeholder="en"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
           </View>
           <View style={styles.editButtons}>
-            <TouchableOpacity onPress={() => setIsEditing(false)}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={saveEdits}>
-              <Text style={styles.saveText}>Save</Text>
-            </TouchableOpacity>
+            <Button
+              title="Cancel"
+              variant="ghost"
+              onPress={() => setIsEditing(false)}
+            />
+            <Button title="Save" onPress={saveEdits} />
           </View>
         </View>
       )}
@@ -234,70 +243,47 @@ export function CollapsiblePair({
 }
 
 const styles = StyleSheet.create({
-  heading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  card: {
+    borderRadius: Radii.lg,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    marginVertical: Spacing.one,
   },
-  pair: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f8f8f8',
-    padding: 4,
-    borderRadius: 8,
-    marginVertical: 4,
-    borderColor: '#686868',
-    borderWidth: 1,
-  },
-  pairInactive: {
+  inactive: {
     opacity: 0.45,
   },
-  pairCurrent: {
-    borderColor: '#1774c6',
-    borderWidth: 2,
-    backgroundColor: '#eef5fc',
-  },
-  divider: {
-    backgroundColor: '#b1b1b1',
-    height: 1,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
   },
   textWrapper: {
     flex: 1,
   },
-  text: {
-    fontSize: 18,
-    color: '#111',
+  // Lowercase presentation is a deliberate part of the card's type treatment.
+  word: {
+    textTransform: 'lowercase',
   },
   details: {
-    paddingHorizontal: 4,
-    paddingBottom: 8,
-    gap: 8,
+    paddingTop: Spacing.two,
+    gap: Spacing.two,
   },
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
-  },
-  meta: {
-    color: '#666',
-    fontSize: 13,
+    gap: Spacing.two,
   },
   stars: {
     flexDirection: 'row',
-    gap: 2,
+    gap: Spacing.one,
   },
   actions: {
     flexDirection: 'row',
-    gap: 14,
   },
-  editInput: {
-    borderWidth: 1,
-    borderColor: '#777',
-    borderRadius: 8,
-    padding: 8,
-    color: '#111',
+  langRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
   },
   langInput: {
     flex: 1,
@@ -305,14 +291,6 @@ const styles = StyleSheet.create({
   editButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 24,
-  },
-  cancelText: {
-    color: '#666',
-    fontWeight: '600',
-  },
-  saveText: {
-    color: '#1774c6',
-    fontWeight: '600',
+    gap: Spacing.two,
   },
 });

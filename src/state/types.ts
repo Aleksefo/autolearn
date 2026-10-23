@@ -35,6 +35,8 @@ export type PlaybackSettings = {
   shuffleEachLoop: boolean;
 };
 
+export type ThemeSetting = 'system' | 'light' | 'dark';
+
 export type LanguageSettings = Partial<
   Pick<
     State,
@@ -52,6 +54,7 @@ export interface State {
   playbackSettings: PlaybackSettings;
   /** Listen counts per day (YYYY-MM-DD), pruned to the last 14 days. */
   dailyListenCounts: Record<string, number>;
+  theme: ThemeSetting;
   addPair: (input: NewPairInput) => void;
   importPairs: (inputs: NewPairInput[]) => void;
   updatePair: (id: string, patch: Partial<Omit<Pair, 'id'>>) => void;
@@ -60,4 +63,5 @@ export interface State {
   incrementTimesListened: (id: string) => void;
   updatePlaybackSettings: (patch: Partial<PlaybackSettings>) => void;
   updateLanguages: (patch: LanguageSettings) => void;
+  setTheme: (theme: ThemeSetting) => void;
 }

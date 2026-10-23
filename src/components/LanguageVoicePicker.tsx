@@ -1,9 +1,11 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import type { Voice } from 'expo-speech';
 import { useMemo, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { OptionChips } from './OptionChips';
+import { OptionChips } from '@/components/OptionChips';
+import { Icon } from '@/components/ui/Icon';
+import { Text } from '@/components/ui/Text';
+import { Spacing } from '@/constants/theme';
 
 // Collapsible language + voice selector fed by the device's speech voices.
 export function LanguageVoicePicker({
@@ -45,28 +47,29 @@ export function LanguageVoicePicker({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
+      <Pressable
         style={styles.header}
         onPress={() => setExpanded(current => !current)}
+        accessibilityRole="button"
         accessibilityLabel={`${label}: ${language}`}
       >
-        <Text style={styles.label}>{label}</Text>
+        <Text variant="bodyBold">{label}</Text>
         <View style={styles.value}>
-          <Text style={styles.valueText}>
+          <Text variant="small" color="textSecondary">
             {language}
             {selectedVoiceName ? ` · ${selectedVoiceName}` : ''}
           </Text>
-          <Ionicons
-            name={expanded ? 'chevron-down' : 'chevron-forward-outline'}
+          <Icon
+            name={expanded ? 'chevronDown' : 'chevronRight'}
             size={16}
-            color="#666"
+            color="textSecondary"
           />
         </View>
-      </TouchableOpacity>
+      </Pressable>
       {expanded && (
         <View style={styles.body}>
           {languages.length === 0 ? (
-            <Text style={styles.hint}>
+            <Text variant="caption" color="textSecondary">
               No speech voices reported by this device.
             </Text>
           ) : (
@@ -78,7 +81,9 @@ export function LanguageVoicePicker({
           )}
           {voicesForLanguage.length > 0 && (
             <>
-              <Text style={styles.hint}>Voice</Text>
+              <Text variant="caption" color="textSecondary">
+                Voice
+              </Text>
               <OptionChips
                 options={[
                   { label: 'Default', value: '' },
@@ -102,32 +107,20 @@ export function LanguageVoicePicker({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 8,
+    gap: Spacing.two,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  label: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#111',
-  },
   value: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-  },
-  valueText: {
-    color: '#666',
-    fontSize: 14,
+    gap: Spacing.one,
+    flexShrink: 1,
   },
   body: {
-    gap: 8,
-  },
-  hint: {
-    color: '#666',
-    fontSize: 13,
+    gap: Spacing.two,
   },
 });

@@ -1,42 +1,43 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Pressable,
   SectionList,
   StyleSheet,
-  Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ClearableInput } from '@/components/ClearableInput';
 import { CollapsiblePair } from '@/components/CollapsiblePair';
 import { EmptyState } from '@/components/EmptyState';
 import { SessionCountdown } from '@/components/SessionCountdown';
+import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
+import { IconButton } from '@/components/ui/IconButton';
+import { Input } from '@/components/ui/Input';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { Text } from '@/components/ui/Text';
 import { starterPairsFor } from '@/constants/starterPairs';
+import { Radii, Spacing, TypeScale } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { usePlayback } from '@/state/playback';
 import { useAppStore } from '@/state/store';
 import { Pair } from '@/state/types';
 import { playbackWeight } from '@/utils/familiarity';
+import { tapHaptic, warningHaptic } from '@/utils/haptics';
 import { weightedShuffle } from '@/utils/weightedShuffle';
 
 const DEFAULT_TIMER_MINUTES = 10;
 const UNDO_TIMEOUT_MS = 5000;
 
 type SortMode = 'date' | 'name' | 'listens';
-const SORT_LABELS: Record<SortMode, string> = {
-  date: 'Date',
-  name: 'Name',
-  listens: 'Listens',
-};
-const NEXT_SORT: Record<SortMode, SortMode> = {
-  date: 'name',
-  name: 'listens',
-  listens: 'date',
-};
+const SORT_SEGMENTS: { value: SortMode; label: string }[] = [
+  { value: 'date', label: 'Date' },
+  { value: 'name', label: 'Name' },
+  { value: 'listens', label: 'Listens' },
+];
 
 const sortPairs = (pairs: Pair[], mode: SortMode): Pair[] => {
   const sorted = [...pairs];
@@ -51,6 +52,8 @@ const sortPairs = (pairs: Pair[], mode: SortMode): Pair[] => {
 };
 
 export default function Index() {
+  const colors = useTheme();
+
   const savedPairList = useAppStore(state => state.savedPairList);
   const sourceLanguage = useAppStore(state => state.sourceLanguage);
   const targetLanguage = useAppStore(state => state.targetLanguage);
@@ -165,6 +168,7 @@ export default function Index() {
   };
 
   const deleteWithUndo = (pair: Pair) => {
+    warningHaptic();
     const index = savedPairList.findIndex(entry => entry.id === pair.id);
     deletePair(pair.id);
     setLastDeleted({ pair, index });
@@ -174,12 +178,14 @@ export default function Index() {
 
   const undoDelete = () => {
     if (!lastDeleted) return;
+    tapHaptic();
     restorePair(lastDeleted.pair, lastDeleted.index);
     setLastDeleted(null);
     if (undoTimer.current) clearTimeout(undoTimer.current);
   };
 
   const onPlayPress = () => {
+    tapHaptic();
     if (playbackStatus === 'paused') {
       resume();
     } else {
@@ -189,15 +195,16 @@ export default function Index() {
 
   // "Random mode": familiarity-weighted, so better-known pairs land later.
   const randomizePairList = () => {
+    tapHaptic();
     setShuffledIds(
       weightedShuffle(mainPairs, playbackWeight).map(pair => pair.id),
     );
     setExpandedPairId(null);
   };
 
-  const cycleSortMode = () => {
+  const changeSortMode = (mode: SortMode) => {
     setShuffledIds(null);
-    setSortMode(mode => NEXT_SORT[mode]);
+    setSortMode(mode);
   };
 
   const togglePairView = (id: string) => {
@@ -205,31 +212,42 @@ export default function Index() {
   };
 
   const renderRightActions = () => (
-    <View style={styles.swipeDelete}>
-      <Ionicons name="trash-outline" size={24} color="#fff" />
+    <View style={[styles.swipeDelete, { backgroundColor: colors.error }]}>
+      <Icon name="trash" size={24} color="onPrimary" />
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <ClearableInput
-        placeholder="Term"
-        value={term}
-        ref={termRef}
-        onChangeText={setTerm}
-        style={styles.input}
-        onSubmitEditing={() => definitionRef.current?.focus()}
-        submitBehavior="submit"
-      />
-      <ClearableInput
-        placeholder="Definition"
-        value={definition}
-        ref={definitionRef}
-        onChangeText={setDefinition}
-        style={styles.input}
-        onSubmitEditing={addNewPair}
-        submitBehavior="submit"
-      />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={['bottom', 'left', 'right']}
+    >
+      <View style={styles.inputs}>
+        <Input
+          placeholder="Term"
+          value={term}
+          ref={termRef}
+          onChangeText={setTerm}
+          clearable
+          autoCapitalize="none"
+          autoCorrect={false}
+          spellCheck={false}
+          onSubmitEditing={() => definitionRef.current?.focus()}
+          submitBehavior="submit"
+        />
+        <Input
+          placeholder="Definition"
+          value={definition}
+          ref={definitionRef}
+          onChangeText={setDefinition}
+          clearable
+          autoCapitalize="none"
+          autoCorrect={false}
+          spellCheck={false}
+          onSubmitEditing={addNewPair}
+          submitBehavior="submit"
+        />
+      </View>
       {savedPairList.length === 0 ? (
         <EmptyState
           onAddStarterPairs={
@@ -242,19 +260,16 @@ export default function Index() {
       ) : (
         <>
           <View style={styles.listHeader}>
-            <Text style={styles.counts}>
+            <SegmentedControl
+              segments={SORT_SEGMENTS}
+              value={sortMode}
+              onChange={changeSortMode}
+            />
+            <Text variant="caption" color="textSecondary">
               {`${savedPairList.length} pairs`}
               {inactiveCount > 0 && ` · ${inactiveCount} inactive`}
               {archivedPairs.length > 0 && ` · ${archivedPairs.length} learned`}
             </Text>
-            <TouchableOpacity
-              onPress={cycleSortMode}
-              style={styles.sortButton}
-              accessibilityLabel={`Sort by ${SORT_LABELS[NEXT_SORT[sortMode]]}`}
-            >
-              <Ionicons name="swap-vertical" size={16} color="#333" />
-              <Text style={styles.sortLabel}>{SORT_LABELS[sortMode]}</Text>
-            </TouchableOpacity>
           </View>
           <SectionList
             sections={sections}
@@ -275,100 +290,143 @@ export default function Index() {
             renderSectionHeader={({ section }) =>
               section.title ? (
                 <View style={styles.sectionHeader}>
-                  <View style={styles.separatorLine} />
-                  <Text style={styles.sectionTitle}>{section.title}</Text>
-                  <View style={styles.separatorLine} />
+                  <View
+                    style={[
+                      styles.separatorLine,
+                      { backgroundColor: colors.border },
+                    ]}
+                  />
+                  <Text variant="caption" color="textSecondary">
+                    {section.title}
+                  </Text>
+                  <View
+                    style={[
+                      styles.separatorLine,
+                      { backgroundColor: colors.border },
+                    ]}
+                  />
                 </View>
               ) : null
             }
             keyExtractor={item => item.id}
             style={styles.terms}
+            contentContainerStyle={styles.termsContent}
             stickySectionHeadersEnabled={false}
           />
         </>
       )}
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity
+      <View
+        style={[
+          styles.controlsContainer,
+          { backgroundColor: colors.backgroundElement },
+        ]}
+      >
+        <IconButton
+          name="shuffle"
           onPress={randomizePairList}
           accessibilityLabel="Shuffle pairs"
-        >
-          <Ionicons name="shuffle" size={32} color="black" />
-        </TouchableOpacity>
+        />
         <View style={styles.timerRow}>
           <SessionCountdown endsAt={sessionEndsAt} />
           <TextInput
             placeholder="Timer"
-            placeholderTextColor="#888"
+            placeholderTextColor={colors.textSecondary}
             value={timerText}
             keyboardType="number-pad"
             maxLength={4}
-            style={styles.timerInput}
+            style={[
+              styles.timerInput,
+              TypeScale.body,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                color: colors.text,
+              },
+            ]}
             onChangeText={text => setTimerText(text.replace(/[^0-9]/g, ''))}
           />
-          <TouchableOpacity
-            onPress={() => playTimed(playableIds(), timerMinutes)}
+          <IconButton
+            name="timer"
+            onPress={() => {
+              tapHaptic();
+              playTimed(playableIds(), timerMinutes);
+            }}
             disabled={!timerIsValid}
+            color={timerIsValid ? 'text' : 'textSecondary'}
             accessibilityLabel="Start timed playback"
-          >
-            <Ionicons
-              name="timer-outline"
-              size={32}
-              color={timerIsValid ? 'black' : '#888'}
-            />
-          </TouchableOpacity>
+          />
         </View>
       </View>
       {lastDeleted && (
-        <View style={styles.undoBar}>
-          <Text style={styles.undoText} numberOfLines={1}>
+        <View
+          style={[
+            styles.undoBar,
+            { backgroundColor: colors.backgroundSelected },
+          ]}
+        >
+          <Text variant="small" numberOfLines={1} style={styles.undoText}>
             {`Deleted "${lastDeleted.pair.term}"`}
           </Text>
-          <TouchableOpacity
-            onPress={undoDelete}
-            accessibilityLabel="Undo delete"
-          >
-            <Text style={styles.undoAction}>Undo</Text>
-          </TouchableOpacity>
+          <Button title="Undo" variant="ghost" onPress={undoDelete} />
         </View>
       )}
       <View style={styles.playbackContainer}>
         {playbackStatus !== 'idle' && (
-          <TouchableOpacity
-            onPress={stop}
-            style={styles.sideControl}
+          <Pressable
+            onPress={() => {
+              tapHaptic();
+              stop();
+            }}
+            accessibilityRole="button"
             accessibilityLabel="Stop playback"
+            style={[
+              styles.sideControl,
+              { backgroundColor: colors.backgroundElement },
+            ]}
           >
-            <Ionicons name="stop-circle-outline" size={40} color="black" />
-          </TouchableOpacity>
+            <Icon name="stop" size={28} />
+          </Pressable>
         )}
-        <View style={styles.playback}>
-          {playbackStatus === 'playing' ? (
-            <TouchableOpacity onPress={pause} accessibilityLabel="Pause">
-              <Ionicons name="pause-circle-outline" size={64} color="black" />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              onPress={onPlayPress}
-              accessibilityLabel={
-                playbackStatus === 'paused' ? 'Resume' : 'Play'
-              }
-            >
-              <Ionicons name="play-circle-outline" size={64} color="black" />
-            </TouchableOpacity>
-          )}
-        </View>
+        <Pressable
+          onPress={
+            playbackStatus === 'playing'
+              ? () => {
+                  tapHaptic();
+                  pause();
+                }
+              : onPlayPress
+          }
+          accessibilityRole="button"
+          accessibilityLabel={
+            playbackStatus === 'playing'
+              ? 'Pause'
+              : playbackStatus === 'paused'
+                ? 'Resume'
+                : 'Play'
+          }
+          style={[styles.playButton, { backgroundColor: colors.primary }]}
+        >
+          <Icon
+            name={playbackStatus === 'playing' ? 'pause' : 'play'}
+            size={40}
+            color="onPrimary"
+          />
+        </Pressable>
         {playbackStatus !== 'idle' && (
-          <TouchableOpacity
-            onPress={skipNext}
-            style={styles.sideControl}
+          <Pressable
+            onPress={() => {
+              tapHaptic();
+              skipNext();
+            }}
+            accessibilityRole="button"
             accessibilityLabel="Next pair"
+            style={[
+              styles.sideControl,
+              { backgroundColor: colors.backgroundElement },
+            ]}
           >
-            <Ionicons
-              name="play-skip-forward-outline"
-              size={40}
-              color="black"
-            />
-          </TouchableOpacity>
+            <Icon name="skipNext" size={28} />
+          </Pressable>
         )}
       </View>
     </SafeAreaView>
@@ -376,136 +434,107 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  // Explicit light palette until Phase 4 theming: the OS dark theme otherwise
-  // flips default text to white on our light backgrounds.
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
-  input: {
-    margin: 8,
-    marginBottom: 0,
+  inputs: {
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two,
+    gap: Spacing.two,
+  },
+  listHeader: {
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two,
+    gap: Spacing.one,
   },
   terms: {
     marginTop: 0,
-    paddingHorizontal: 8,
   },
-  listHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingTop: 8,
-  },
-  counts: {
-    color: '#666',
-    fontSize: 13,
-  },
-  sortButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  sortLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#333',
+  termsContent: {
+    paddingHorizontal: Spacing.three,
+    paddingBottom: Spacing.six + Spacing.five,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 12,
-    marginBottom: 4,
+    gap: Spacing.two,
+    marginTop: Spacing.three,
+    marginBottom: Spacing.one,
   },
   separatorLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: '#b1b1b1',
-  },
-  sectionTitle: {
-    color: '#666',
-    fontSize: 13,
-    fontWeight: '600',
+    height: StyleSheet.hairlineWidth,
   },
   swipeDelete: {
-    backgroundColor: '#c0392b',
     justifyContent: 'center',
     alignItems: 'center',
     width: 72,
-    borderRadius: 8,
-    marginVertical: 4,
+    borderRadius: Radii.lg,
+    marginVertical: Spacing.one,
   },
   controlsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#c1c1c1',
-    height: 40,
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.two,
   },
   timerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.two,
   },
   timerInput: {
     borderWidth: 1,
-    color: '#111',
+    borderRadius: Radii.md,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+    minWidth: 64,
+    textAlign: 'center',
   },
   undoBar: {
     position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 96,
+    left: Spacing.three,
+    right: Spacing.three,
+    bottom: 104,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#333',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    gap: 12,
+    borderRadius: Radii.md,
+    paddingLeft: Spacing.three,
+    paddingVertical: Spacing.one,
+    gap: Spacing.two,
   },
   undoText: {
-    color: '#fff',
     flex: 1,
-  },
-  undoAction: {
-    color: '#7cc0f5',
-    fontWeight: '700',
   },
   playbackContainer: {
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 8,
+    bottom: Spacing.two,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 16,
+    gap: Spacing.three,
   },
   sideControl: {
-    backgroundColor: '#fff',
-    borderRadius: 40,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    width: 48,
+    height: 48,
+    borderRadius: Radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3,
   },
-  playback: {
-    backgroundColor: '#fff',
-    borderRadius: 64,
+  playButton: {
+    width: 72,
+    height: 72,
+    borderRadius: Radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
   },
 });

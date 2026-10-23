@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
+
+import { Text } from '@/components/ui/Text';
 
 // Shows mm:ss remaining in a timed session; renders nothing outside one.
 export function SessionCountdown({ endsAt }: { endsAt: number | null }) {
@@ -23,7 +25,7 @@ export function SessionCountdown({ endsAt }: { endsAt: number | null }) {
   const seconds = Math.floor((remaining % 60_000) / 1000);
 
   return (
-    <Text style={styles.countdown}>
+    <Text variant="bodyBold" color="textSecondary" style={styles.countdown}>
       {`${minutes}:${String(seconds).padStart(2, '0')}`}
     </Text>
   );
@@ -32,7 +34,5 @@ export function SessionCountdown({ endsAt }: { endsAt: number | null }) {
 const styles = StyleSheet.create({
   countdown: {
     fontVariant: ['tabular-nums'],
-    marginRight: 8,
-    color: '#111',
   },
 });
